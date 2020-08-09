@@ -406,7 +406,7 @@ public class SwitchAccessService extends AccessibilityService
   }
 
   @Override
-  protected boolean onKeyEvent(KeyEvent keyEvent) {
+  public boolean onKeyEvent(KeyEvent keyEvent) {
     Trace.beginSection("SwitchAccessService#onKeyEvent");
     boolean wasKeyEventProcessed = SharedKeyEvent.onKeyEvent(this, keyEvent);
     Trace.endSection();

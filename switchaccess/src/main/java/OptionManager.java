@@ -22,6 +22,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Trace;
+
 import androidx.annotation.VisibleForTesting;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import com.android.switchaccess.SwitchAccessService;
@@ -30,6 +31,7 @@ import com.google.android.accessibility.switchaccess.feedback.SwitchAccessFeedba
 import com.google.android.accessibility.switchaccess.menuitems.MenuItem;
 import com.google.android.accessibility.switchaccess.menuitems.MenuItem.SelectMenuItemListener;
 import com.google.android.accessibility.switchaccess.proto.SwitchAccessMenuTypeEnum.MenuType;
+import com.google.android.accessibility.switchaccess.treenodes.ShowGlobalMenuNode;
 import com.google.android.accessibility.switchaccess.treenodes.ClearFocusNode;
 import com.google.android.accessibility.switchaccess.treenodes.NonActionableItemNode;
 import com.google.android.accessibility.switchaccess.treenodes.OverlayActionNode;
@@ -43,6 +45,8 @@ import com.google.android.accessibility.switchaccess.ui.OptionScanHighlighter;
 import com.google.android.accessibility.switchaccess.ui.OverlayController;
 import com.google.android.accessibility.switchaccess.ui.OverlayController.MenuListener;
 import com.google.android.libraries.accessibility.utils.concurrent.ThreadUtils;
+import com.google.android.accessibility.switchaccess.TestExecutor.WidgetInfo;
+import com.google.android.accessibility.switchaccess.TestExecutor.SwitchAccessCommandExecutor;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -631,6 +635,24 @@ public class OptionManager implements SwitchAccessPreferenceChangedListener, Men
   }
 
   private void onNodeFocused(boolean isFocusingFirstNodeInTree, ScanStateChangeTrigger trigger) {
+    boolean isGlobalMenuItem = false;
+    boolean isLastNode = false;
+    if(currentNode != null) {
+      if(currentNode instanceof TreeScanSelectionNode){
+        TreeScanSelectionNode treeScanSelectionNode = (TreeScanSelectionNode) currentNode;
+        TreeScanNode startNode = treeScanSelectionNode.getChild(OPTION_INDEX_CLICK);
+        if(startNode instanceof ShowGlobalMenuNode)
+          isGlobalMenuItem = true;
+      }
+      else if(currentNode instanceof TreeScanLeafNode){
+        TreeScanLeafNode treeScanLeafNode = (TreeScanLeafNode) currentNode;
+        if(treeScanLeafNode instanceof ClearFocusNode)
+          isLastNode = true;
+      }
+    }
+    SwitchAccessNodeCompat currentlyActiveNode = findCurrentlyActiveNode();
+    WidgetInfo widgetInfo = WidgetInfo.create(isGlobalMenuItem, isLastNode, currentlyActiveNode);
+    SwitchAccessCommandExecutor.manageCommands(widgetInfo);
     if (scanListener != null) {
       if (currentNode instanceof ClearFocusNode) {
         signalFocusClearedWithoutSelection(trigger);
