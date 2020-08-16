@@ -1,4 +1,4 @@
-package dev.navids.noidaccessibility;
+package com.google.android.accessibility.switchaccess.noid;
 
 import android.graphics.Rect;
 import android.os.Build;
@@ -17,22 +17,22 @@ import java.util.List;
 import java.util.Map;
 
 
-public class NewWidgetInfo {
+public class WidgetInfo {
     List<String> attributeNames = Arrays.asList(
             "resourceId", "contentDescription", "text", "class", "xpath");
     public static List<String> maskedAttributes = new ArrayList<>();
-    public List<NewWidgetInfo> leftContext = new ArrayList<>();
-    public List<NewWidgetInfo> rightContext = new ArrayList<>();
+    public List<WidgetInfo> leftContext = new ArrayList<>();
+    public List<WidgetInfo> rightContext = new ArrayList<>();
     public final static int contextSize = 3;
     Map<String, String> attributes = new HashMap<>();
     String locatedBy = "";
     AccessibilityNodeInfo node;
-    public static Map<AccessibilityNodeInfo, NewWidgetInfo> createdWidgets = new HashMap<>();
+    public static Map<AccessibilityNodeInfo, WidgetInfo> createdWidgets = new HashMap<>();
     public static void createAll(List<AccessibilityNodeInfo> nodes){
         createdWidgets.clear();
-        List<NewWidgetInfo> contextInfo = new ArrayList<>();
+        List<WidgetInfo> contextInfo = new ArrayList<>();
         for(AccessibilityNodeInfo node : nodes) {
-            NewWidgetInfo widgetInfo = NewWidgetInfo.create(node);
+            WidgetInfo widgetInfo = WidgetInfo.create(node);
             createdWidgets.put(node, widgetInfo);
             if(node.getChildCount() == 0 && node.isVisibleToUser())
                 contextInfo.add(widgetInfo);
@@ -48,9 +48,9 @@ public class NewWidgetInfo {
         }
     }
 
-    public static NewWidgetInfo create(AccessibilityNodeInfo node){
+    public static WidgetInfo create(AccessibilityNodeInfo node){
         if (node == null){
-            return new NewWidgetInfo("");
+            return new WidgetInfo("");
         }
         if(createdWidgets.containsKey(node))
             return createdWidgets.get(node);
@@ -58,7 +58,7 @@ public class NewWidgetInfo {
         String contentDescription = String.valueOf(node.getContentDescription());
         String text = String.valueOf(node.getText());
         String clsName = String.valueOf(node.getClassName());
-        NewWidgetInfo widgetInfo = new NewWidgetInfo(resourceId, contentDescription, text, clsName);
+        WidgetInfo widgetInfo = new WidgetInfo(resourceId, contentDescription, text, clsName);
         widgetInfo.setNodeCompat(node);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             widgetInfo.setXpath(widgetInfo.getXpath());
@@ -66,23 +66,23 @@ public class NewWidgetInfo {
         return widgetInfo;
     }
 
-    public static NewWidgetInfo getWidget(AccessibilityNodeInfo node){
+    public static WidgetInfo getWidget(AccessibilityNodeInfo node){
         if(node != null && createdWidgets.containsKey(node))
             return createdWidgets.get(node);
         return null;
     }
 
-    public NewWidgetInfo(String resourceId) {
+    public WidgetInfo(String resourceId) {
         this(resourceId, "", "", null);
     }
-    public static NewWidgetInfo createFromJson(JSONObject cmd) {
+    public static WidgetInfo createFromJson(JSONObject cmd) {
         if(cmd == null)
-            return new NewWidgetInfo("");
+            return new WidgetInfo("");
         String resourceId = (String) cmd.getOrDefault("resourceId", "");
         String contentDescription = (String) cmd.getOrDefault("contentDescription", "");
         String text = (String) cmd.getOrDefault("text", "");
         String clsName = (String) cmd.getOrDefault("class", "");
-        NewWidgetInfo widgetInfo = new NewWidgetInfo(resourceId, contentDescription,text, clsName);
+        WidgetInfo widgetInfo = new WidgetInfo(resourceId, contentDescription,text, clsName);
 
         String xpath = (String) cmd.getOrDefault("xpath", "");
         if(!xpath.equals("")) {
@@ -98,29 +98,29 @@ public class NewWidgetInfo {
         JSONArray leftContextJson = (JSONArray) cmd.getOrDefault("left_context", new JSONArray());
         for(int i=0; i<leftContextJson.size(); i++){
             JSONObject subCmd = (JSONObject) leftContextJson.get(i);
-            widgetInfo.leftContext.add(NewWidgetInfo.createFromJson(subCmd));
+            widgetInfo.leftContext.add(WidgetInfo.createFromJson(subCmd));
         }
         JSONArray rightContextJson = (JSONArray) cmd.getOrDefault("right_context", new JSONArray());
         for(int i=0; i<rightContextJson.size(); i++){
             JSONObject subCmd = (JSONObject) rightContextJson.get(i);
-            widgetInfo.rightContext.add(NewWidgetInfo.createFromJson(subCmd));
+            widgetInfo.rightContext.add(WidgetInfo.createFromJson(subCmd));
         }
         return widgetInfo;
     }
-    public NewWidgetInfo(String resourceId, String contentDescription, String text, String clsName) {
+    public WidgetInfo(String resourceId, String contentDescription, String text, String clsName) {
         attributes.put(attributeNames.get(0), resourceId);
         attributes.put(attributeNames.get(1), contentDescription);
         attributes.put(attributeNames.get(2), text);
         attributes.put(attributeNames.get(3), clsName);
     }
 
-    public boolean isSimilar(NewWidgetInfo other){
+    public boolean isSimilar(WidgetInfo other){
         boolean contentSimilar = isSimilarWithoutContext(other, maskedAttributes);
         boolean contextSimilar = true;isSimilarContext(other);
         return contentSimilar && contextSimilar;
     }
 
-    private boolean isSimilarWithoutContext(NewWidgetInfo other, List<String> myMaskedAttributes){
+    private boolean isSimilarWithoutContext(WidgetInfo other, List<String> myMaskedAttributes){
         return this.getAttr("xpath").equals(other.getAttr("xpath"));
 //        boolean isSimilar = true;
 //        for(String attrName : attributeNames){
@@ -135,7 +135,7 @@ public class NewWidgetInfo {
 //        return isSimilar;
     }
 
-    private boolean isSimilarContext(NewWidgetInfo other){
+    private boolean isSimilarContext(WidgetInfo other){
         int thisLeftSize = Integer.min(contextSize, this.leftContext.size());
         int thisRightSize = Integer.min(contextSize, this.rightContext.size());
         int otherLeftSize = Integer.min(contextSize, other.leftContext.size());
@@ -169,7 +169,7 @@ public class NewWidgetInfo {
         return s != null && !s.equals("") && !s.equals("null");
     }
 
-    public boolean isSimilarAttribute(NewWidgetInfo other, String attributeName){
+    public boolean isSimilarAttribute(WidgetInfo other, String attributeName){
         if(this.isLocatedBy(attributeName) || other.isLocatedBy(attributeName))
             if(!this.hasAttr(attributeName) || !other.hasAttr(attributeName))
                 return false;
@@ -178,7 +178,7 @@ public class NewWidgetInfo {
         return getAttr(attributeName).equals(other.getAttr(attributeName));
     }
 
-    public boolean similarXpath(NewWidgetInfo other){
+    public boolean similarXpath(WidgetInfo other){
         return this.getXpath().contains(other.getXpath()) || other.getXpath().contains(this.getXpath());
     }
 
@@ -210,12 +210,15 @@ public class NewWidgetInfo {
             int length = 0;
             String itClsName = String.valueOf(it.getClassName());
             for(int i=0; i<it.getParent().getChildCount(); i++) {
-                String childClsName = String.valueOf(it.getParent().getChild(i).getClassName());
-                if(!it.getParent().getChild(i).isVisibleToUser())
+                AccessibilityNodeInfo child = it.getParent().getChild(i);
+                if(child == null)
+                    continue;
+                String childClsName = String.valueOf(child.getClassName());
+                if(!child.isVisibleToUser())
                     continue;
                 if (itClsName.equals(childClsName))
                     length++;
-                if(it.getParent().getChild(i).equals(it)) {
+                if(child.equals(it)) {
                     count = length;
                 }
             }

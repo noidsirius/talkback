@@ -1,35 +1,37 @@
-package dev.navids.noidaccessibility;
+package com.google.android.accessibility.switchaccess.noid;
+
+import androidx.annotation.NonNull;
 
 import com.google.android.accessibility.switchaccess.SwitchAccessNodeCompat;
 
 
-public class NewSwitchAccessWidgetInfo extends NewWidgetInfo {
+public class SwitchAccessWidgetInfo extends WidgetInfo {
     boolean isMenu = false;
     boolean isLastNode = false;
     SwitchAccessNodeCompat switchAccessNodeCompat;
 
-    public NewSwitchAccessWidgetInfo(String resourceId) {
+    public SwitchAccessWidgetInfo(String resourceId) {
         super(resourceId);
     }
 
-    public NewSwitchAccessWidgetInfo(String resourceId, String contentDescription, String text, String clsName) {
+    public SwitchAccessWidgetInfo(String resourceId, String contentDescription, String text, String clsName) {
         super(resourceId, contentDescription, text, clsName);
     }
 
-    public static NewSwitchAccessWidgetInfo create(boolean isMenu,
-                                                   boolean isLastNode,
-                                                   SwitchAccessNodeCompat nodeCompat){
+    public static SwitchAccessWidgetInfo create(boolean isMenu,
+                                                boolean isLastNode,
+                                                SwitchAccessNodeCompat nodeCompat){
         if(isMenu || isLastNode) {
-            NewSwitchAccessWidgetInfo widgetInfo = new NewSwitchAccessWidgetInfo("");
+            SwitchAccessWidgetInfo widgetInfo = new SwitchAccessWidgetInfo("");
             widgetInfo.isLastNode = isLastNode;
             widgetInfo.isMenu = isMenu;
             return widgetInfo;
         }
         if (nodeCompat == null){
-            return new NewSwitchAccessWidgetInfo("");
+            return new SwitchAccessWidgetInfo("");
         }
-        NewWidgetInfo superWidgetInfo = NewWidgetInfo.create(nodeCompat.unwrap());
-        NewSwitchAccessWidgetInfo newWidgetInfo = new NewSwitchAccessWidgetInfo(
+        WidgetInfo superWidgetInfo = WidgetInfo.create(nodeCompat.unwrap());
+        SwitchAccessWidgetInfo newWidgetInfo = new SwitchAccessWidgetInfo(
                 superWidgetInfo.getAttr("resourceId"),
                 superWidgetInfo.getAttr("contentDescription"),
                 superWidgetInfo.getAttr("text"),
@@ -41,11 +43,21 @@ public class NewSwitchAccessWidgetInfo extends NewWidgetInfo {
     }
 
     @Override
-    public boolean isSimilar(NewWidgetInfo other) {
+    public boolean isSimilar(WidgetInfo other) {
         return isSimilarAttribute(other, "xpath");
     }
 
     public SwitchAccessNodeCompat getSwitchAccessNodeCompat() {
         return switchAccessNodeCompat;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        if(isMenu)
+            return "WidgetInfo: Menu";
+        if(isLastNode)
+            return "WidgetInfo: LastNode";
+        return super.toString();
     }
 }

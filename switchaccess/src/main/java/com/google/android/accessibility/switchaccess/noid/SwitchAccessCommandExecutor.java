@@ -1,4 +1,4 @@
-package dev.navids.noidaccessibility;
+package com.google.android.accessibility.switchaccess.noid;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,57 +18,76 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class NewSwitchAccessCommandExecutor {
-    private static NewSwitchAccessWidgetInfo focusedNode;
+public class SwitchAccessCommandExecutor {
+    private static SwitchAccessWidgetInfo focusedNode;
     public static TreeScanNode currentRootNode;
     public static long LAST_DOWN_TIME = 0;
     private static boolean changedFocused = false;
+    private static int waitingForFocusChange = 0;
+    private static final int MAX_WAIT_FOR_CHANGE = 2;
     public static Map<Integer, String> pendingActions = new HashMap<>();
     public static int pendingActionId = 0;
     public static interface MyCallBack{
         void callback();
     }
-    public static void setFocusedNode(NewSwitchAccessWidgetInfo node){
+    public static void setFocusedNode(SwitchAccessWidgetInfo node, TreeScanNode currentNode){
         focusedNode = node;
-        changedFocused = true;
+        if(currentNode != null)
+            changedFocused = true;
+
     }
 
-    public static List<AccessibilityNodeInfo> findNodesXpath(NewWidgetInfo target){
+    public static List<AccessibilityNodeInfo> findNodesXpath(WidgetInfo target){
         List<AccessibilityNodeInfo> result = new ArrayList<>();
         for(AccessibilityNodeInfo node : AccessibilityUtil.getAllA11yNodeInfo(false)) {
-            NewWidgetInfo currentNodeInfo = NewWidgetInfo.create(node);
+            WidgetInfo currentNodeInfo = WidgetInfo.create(node);
             if (target.isSimilarAttribute(currentNodeInfo, "xpath"))
                 result.add(node);
         }
         return result;
     }
 
-    public static int executeCommand(NewCommand command){
-        Log.i(AccessibilityUtil.TAG, String.format("Command state: %s, action: %s, actionExtra: %s, target: %s.",
+    public static int executeCommand(Command command){
+        Log.i(AccessibilityUtil.TAG, String.format("SwitchAccess Command state: %s, action: %s, actionExtra: %s, target: %s.",
                 command.getExecutionState(),
                 command.getAction(),
                 command.getActionExtra(),
                 command.getTargetWidgetInfo()));
+        if(focusedNode == null ||
+                (!focusedNode.isMenu
+                        && !focusedNode.isLastNode
+                        && focusedNode.getSwitchAccessNodeCompat() == null)){
+            waitingForFocusChange++;
+            if(waitingForFocusChange < MAX_WAIT_FOR_CHANGE) {
+                Log.i(AccessibilityUtil.TAG, "Ignore this manageCommand since no node has been changed " + waitingForFocusChange);
+                return command.getExecutionState();
+            }
+            waitingForFocusChange = 0;
+        }
         if(pendingActions.size() > 0){
             Log.i(AccessibilityUtil.TAG, "Ignore this manageCommand since we're waiting for another action");
             return command.getExecutionState();
         }
         switch (command.getExecutionState()){
-            case NewCommand.NOT_STARTED:
+            case Command.NOT_STARTED:
                 Log.i(AccessibilityUtil.TAG, "--- Change to SEARCH");
-                command.setExecutionState(NewCommand.SEARCH);
-            case NewCommand.SEARCH:
+                command.setExecutionState(Command.SEARCH);
+            case Command.SEARCH:
                 List<AccessibilityNodeInfo> similarNodes = findNodesXpath(command.getTargetWidgetInfo());
                 if(similarNodes.size() == 0){
                     Log.i(AccessibilityUtil.TAG, "The target widget could not be found in current screen.");
-                    command.setExecutionState(NewCommand.FAILED);
+                    command.numberOfAttempts++;
+                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT)
+                        command.setExecutionState(Command.FAILED);
                 }
                 else if(similarNodes.size() > 1){
                     Log.i(AccessibilityUtil.TAG, "There are more than one candidates for the target.");
                     for(AccessibilityNodeInfo node : similarNodes){
                         Log.i(AccessibilityUtil.TAG, " Node: " + node);
                     }
-                    command.setExecutionState(NewCommand.FAILED);
+                    command.numberOfAttempts++;
+                    if(command.numberOfAttempts >= command.MAX_ATTEMPT)
+                        command.setExecutionState(Command.FAILED);
                 }
                 else{
                     AccessibilityNodeInfo node = similarNodes.get(0);
@@ -102,26 +121,30 @@ public class NewSwitchAccessCommandExecutor {
 
 //                        boolean isSimilar = focusedNode.getSwitchAccessNodeCompat().unwrap().equals(node);
                         if (isSimilar) {
-                            if (command.getAction().equals(NewCommand.CMD_ASSERT)) {
+                            if (command.getAction().equals(Command.CMD_ASSERT)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do ASSERT");
-                            } else if (command.getAction().equals(NewCommand.CMD_CLICK)) {
+                            } else if (command.getAction().equals(Command.CMD_CLICK)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do CLICK");
+                                command.numberOfActions++;
                                 performSelect();
-                            } else if (command.getAction().equals(NewCommand.CMD_TYPE)) {
+                            } else if (command.getAction().equals(Command.CMD_TYPE)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do TYPE AND NEXT");
                                 performType(focusedNode.getSwitchAccessNodeCompat(), command.getActionExtra());
+                                command.numberOfActions++;
                                 performNext();
                             } else {
                                 Log.i(AccessibilityUtil.TAG, "Command's action is unknown " + command.getAction());
                             }
-                            command.setExecutionState(NewCommand.COMPLETED);
+                            command.setExecutionState(Command.COMPLETED);
                         } else {
                             Log.i(AccessibilityUtil.TAG, "--- Do NEXT");
+                            command.numberOfActions++;
                             performNext();
                         }
                     }
                     else{
                         Log.i(AccessibilityUtil.TAG, "--- Node is not focused. Do NEXT");
+                        command.numberOfActions++;
                         performNext();
                     }
                     return command.getExecutionState();
@@ -148,6 +171,8 @@ public class NewSwitchAccessCommandExecutor {
     public static void performMyAction(boolean isSelect, MyCallBack myCallBack){
 //        WidgetInfo myWidgetInfo = latestWidgetInfo;
 //        Log.i(TAG, " ======== BEGINNING of " + (isSelect ? "SELECT" : "NEXT") + " " + myWidgetInfo);
+        changedFocused = false;
+        focusedNode = null;
         int code = isSelect ? KeyEvent.KEYCODE_VOLUME_UP: KeyEvent.KEYCODE_VOLUME_DOWN;
         if(com.android.switchaccess.SwitchAccessService.getInstance() != null){
             final int thisActionId = pendingActionId;
@@ -219,7 +244,7 @@ public class NewSwitchAccessCommandExecutor {
     }
 
     private static void addItemNodesToSet(TreeScanNode startNode, List<TreeScanSystemProvidedNode> nodeSet, String prefix) {
-//        Log.i(SwitchAccessCommandExecutor.TAG, prefix + "Node: " + startNode);
+        Log.i(AccessibilityUtil.TAG, prefix + "Node: " + startNode);
         if (startNode instanceof TreeScanSystemProvidedNode) {
             nodeSet.add((TreeScanSystemProvidedNode) startNode);
         }

@@ -74,8 +74,8 @@ import com.google.android.libraries.accessibility.utils.log.LogUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.qual.SideEffectFree;
 
-import dev.navids.noidaccessibility.AccessibilityUtil;
-import dev.navids.noidaccessibility.CLIController;
+import com.google.android.accessibility.switchaccess.noid.AccessibilityUtil;
+import com.google.android.accessibility.switchaccess.noid.CLIController;
 
 /**
  * Enable a user to perform touch gestures using keyboards with only a small number of keys. These
@@ -204,6 +204,8 @@ public class SwitchAccessService extends AccessibilityService
 
   @Override
   public void onAccessibilityEvent(AccessibilityEvent event) {
+    CLIController.onAccessibilityEvent(event);
+    String x = "432";
     Trace.beginSection("SwitchAccessService#onAccessibilityEvent");
     // Only process the AccessibilityEvents when the screen is on.
     if (screenMonitor != null && screenMonitor.isScreenOn()) {

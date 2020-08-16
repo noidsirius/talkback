@@ -1,4 +1,4 @@
-package dev.navids.noidaccessibility;
+package com.google.android.accessibility.switchaccess.noid;
 
 import android.util.Log;
 
@@ -16,7 +16,17 @@ import java.util.List;
 
 public class CommandManager {
     public static int lastCommandIndex = -1;
-    public static List<NewCommand> commandList = new ArrayList<>();
+    public static List<Command> commandList = new ArrayList<>();
+
+    public interface TestExecutor{
+        int executeCommand(Command cmd);
+    }
+
+    public static void setTestExecutor(TestExecutor testExecutor) {
+        CommandManager.testExecutor = testExecutor;
+    }
+
+    private static TestExecutor testExecutor;
 
     public static boolean manageCommands(){
         return manageCommands(true);
@@ -30,20 +40,26 @@ public class CommandManager {
             lastCommandIndex--;
         if(lastCommandIndex >= commandList.size()) {
             Log.i(AccessibilityUtil.TAG, "----------The test case is completed!---------");
+            for(int i=0; i<commandList.size(); i++) {
+                Command cmd = commandList.get(i);
+                Log.i(AccessibilityUtil.TAG, String.format("   CMD %d. State: %s, #Actions: %d, Target: %s on Widget %s",
+                        i + 1, Command.getActionStr(cmd.getExecutionState()), cmd.numberOfActions,
+                        cmd.getAction(), cmd.getTargetWidgetInfo().getAttr("xpath")));
+            }
             return false;
         }
-        Log.i(AccessibilityUtil.TAG, "Executing command " + (lastCommandIndex+1) + " Masks " + NewWidgetInfo.maskedAttributes);
-        NewCommand currentCommand = commandList.get(lastCommandIndex);
+        Log.i(AccessibilityUtil.TAG, "Executing command " + (lastCommandIndex+1) + " Masks " + WidgetInfo.maskedAttributes);
+        Command currentCommand = commandList.get(lastCommandIndex);
         if(!isNext)
-            currentCommand.setExecutionState(NewCommand.NOT_STARTED);
-        if(currentCommand.getExecutionState() == NewCommand.FAILED)
-            currentCommand.setExecutionState(NewCommand.NOT_STARTED);
+            currentCommand.setExecutionState(Command.NOT_STARTED);
+        if(currentCommand.getExecutionState() == Command.FAILED)
+            currentCommand.setExecutionState(Command.NOT_STARTED);
         int result = executeCommand(currentCommand);
-        if(result == NewCommand.COMPLETED) {
+        if(result == Command.COMPLETED) {
             Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex+1) + " is completed!");
             lastCommandIndex++;
         }
-        else if(result == NewCommand.FAILED) {
+        else if(result == Command.FAILED) {
             Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex + 1) + " is failed!");
             lastCommandIndex++;
         }
@@ -76,22 +92,22 @@ public class CommandManager {
                 }
                 String action = (String) cmd.getOrDefault("action", "UNKNOWN");
                 if(action.equals("click"))
-                    action = NewCommand.CMD_CLICK;
+                    action = Command.CMD_CLICK;
                 else if(action.equals("send_keys"))
-                    action = NewCommand.CMD_TYPE;
+                    action = Command.CMD_TYPE;
                 else
                     action = "UNKNOWN";
-                NewWidgetInfo widgetInfo = NewWidgetInfo.createFromJson(cmd);
+                WidgetInfo widgetInfo = WidgetInfo.createFromJson(cmd);
                 String message = "";
                 if(cmd.containsKey("action_args")) {
                     JSONArray args = (JSONArray) cmd.get("action_args");
-                    if(action.equals(NewCommand.CMD_TYPE))
+                    if(action.equals(Command.CMD_TYPE))
                         message = String.valueOf(args.get(0));
                     else
                         Log.i(AccessibilityUtil.TAG,"-------> Args: " + args);
                 }
                 Log.i(AccessibilityUtil.TAG, "Json " + action + " " + message + " " + widgetInfo);
-                commandList.add(new NewCommand(widgetInfo, action, message));
+                commandList.add(new Command(widgetInfo, action, message));
             }
 
         } catch (IOException e) {
@@ -107,8 +123,9 @@ public class CommandManager {
         Log.i(AccessibilityUtil.TAG, "CMD: the command index is " + lastCommandIndex);
     }
 
-    public static int executeCommand(NewCommand command){
-        return NewSwitchAccessCommandExecutor.executeCommand(command);
-//        return RegularCommandExecutor.executeCommand(command);
+    public static int executeCommand(Command command){
+        if(testExecutor == null)
+            return RegularCommandExecutor.executeCommand(command);
+        return testExecutor.executeCommand(command);
     }
 }

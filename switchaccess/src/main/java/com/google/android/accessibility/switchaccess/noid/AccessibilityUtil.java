@@ -1,4 +1,4 @@
-package dev.navids.noidaccessibility;
+package com.google.android.accessibility.switchaccess.noid;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
@@ -188,10 +188,10 @@ public class AccessibilityUtil {
         return result;
     }
 
-    public static List<AccessibilityNodeInfo> findNodes(NewWidgetInfo target){
+    public static List<AccessibilityNodeInfo> findNodes(WidgetInfo target){
         List<AccessibilityNodeInfo> result = new ArrayList<>();
         for(AccessibilityNodeInfo node : getAllA11yNodeInfo(false)) {
-            NewWidgetInfo currentNodeInfo = NewWidgetInfo.create(node);
+            WidgetInfo currentNodeInfo = WidgetInfo.create(node);
             if (target.isSimilar(currentNodeInfo))
                 result.add(node);
         }

@@ -1,4 +1,4 @@
-package dev.navids.noidaccessibility;
+package com.google.android.accessibility.switchaccess.noid;
 
 
 import android.os.Handler;
@@ -40,7 +40,7 @@ public class CLIController {
 
             }
             else {
-                NewWidgetInfo.createAll(AccessibilityUtil.getAllA11yNodeInfo(false));
+                WidgetInfo.createAll(AccessibilityUtil.getAllA11yNodeInfo(false));
                 if (nextCommand.equals("log")) {
                     Log.i(AccessibilityUtil.TAG, "CMD: log");
                     logCurrentState();
@@ -48,16 +48,16 @@ public class CLIController {
                 } else if (nextCommand.equals("log_widgets")) {
                     Log.i(AccessibilityUtil.TAG, "CMD: log_widgets");
                     for (AccessibilityNodeInfo node : AccessibilityUtil.getAllA11yNodeInfo(false))
-                        Log.i(AccessibilityUtil.TAG,  "  " + NewWidgetInfo.getWidget(node));
+                        Log.i(AccessibilityUtil.TAG,  "  " + WidgetInfo.getWidget(node));
                     clearCommandFile();
                 } else if (nextCommand.startsWith("mask_")) {
                     Log.i(AccessibilityUtil.TAG, "CMD: mask");
                     String[] tokens = nextCommand.split("_");
                     Log.i(AccessibilityUtil.TAG, "tokens " + tokens);
-                    NewWidgetInfo.maskedAttributes.clear();
+                    WidgetInfo.maskedAttributes.clear();
                     for (int i = 1; i < tokens.length; i++) {
                         Log.i(AccessibilityUtil.TAG, "  token " + tokens[i]);
-                        NewWidgetInfo.maskedAttributes.add(tokens[i]);
+                        WidgetInfo.maskedAttributes.add(tokens[i]);
                     }
                     clearCommandFile();
                 } else if (nextCommand.equals("init")) {
@@ -87,6 +87,21 @@ public class CLIController {
                     Log.i(AccessibilityUtil.TAG, "CMD: the delay between each command is " + delayBetweenCommands);
                     clearCommandFile();
                 }
+                else if (nextCommand.startsWith("executor_")) {
+                    Log.i(AccessibilityUtil.TAG, "CMD: set executor");
+                    String executor = nextCommand.substring("executor_".length());
+                    if(executor.equals("switch")) {
+                        Log.i(AccessibilityUtil.TAG, "CMD: The current executor is set to SwitchAccess");
+                        CommandManager.setTestExecutor(SwitchAccessCommandExecutor::executeCommand);
+                    }
+                    else if(executor.equals("regular")) {
+                        Log.i(AccessibilityUtil.TAG, "CMD: The current executor is set to SwitchAccess");
+                        CommandManager.setTestExecutor(RegularCommandExecutor::executeCommand);
+                    }
+                    else
+                        Log.i(AccessibilityUtil.TAG, "CMD: The requested executor is unknown! " + executor);
+                    clearCommandFile();
+                }
                 Log.i(AccessibilityUtil.TAG,"--------- Complete command " + nextCommand);
             }
 
@@ -112,8 +127,13 @@ public class CLIController {
     }
 
 
-    public static void onAccessibilityEvent(AccessibilityEvent event){
+    public static void onAccessibilityEvent(AccessibilityEvent event)
+    {
         updated = true;
+        if(event.getEventType() == AccessibilityEvent.TYPE_VIEW_CLICKED
+        ||event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED)
+            Log.i(AccessibilityUtil.TAG, "Event " + AccessibilityEvent.eventTypeToString(event.getEventType()));
+
     }
 
     public static void logCurrentState(){
