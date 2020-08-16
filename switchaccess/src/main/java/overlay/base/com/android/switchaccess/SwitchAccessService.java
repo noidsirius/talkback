@@ -35,7 +35,6 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.accessibility.AccessibilityEvent;
-import android.view.accessibility.AccessibilityNodeInfo;
 
 import com.google.android.accessibility.compositor.Compositor;
 import com.google.android.accessibility.compositor.GlobalVariables;
@@ -49,7 +48,6 @@ import com.google.android.accessibility.switchaccess.SwitchAccessLogger;
 import com.google.android.accessibility.switchaccess.SwitchAccessPreferenceCache;
 import com.google.android.accessibility.switchaccess.SwitchAccessPreferenceCache.SwitchAccessPreferenceChangedListener;
 import com.google.android.accessibility.switchaccess.SwitchAccessPreferenceUtils;
-import com.google.android.accessibility.switchaccess.TestExecutor.SwitchAccessCommandExecutor;
 import com.google.android.accessibility.switchaccess.UiChangeDetector;
 import com.google.android.accessibility.switchaccess.UiChangeHandler;
 import com.google.android.accessibility.switchaccess.UiChangeStabilizer;
@@ -76,6 +74,7 @@ import com.google.android.libraries.accessibility.utils.log.LogUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.qual.SideEffectFree;
 
+import dev.navids.noidaccessibility.AccessibilityUtil;
 import dev.navids.noidaccessibility.CLIController;
 
 /**
@@ -280,7 +279,7 @@ public class SwitchAccessService extends AccessibilityService
   public boolean connected = false;
   @Override
   protected void onServiceConnected() {
-    Log.i(SwitchAccessCommandExecutor.TAG, "onServiceConnected");
+    Log.i(AccessibilityUtil.TAG, "onServiceConnected");
     // Enable verbose logging in dev builds.
     if (FeatureFlags.devBuildLogging()) {
       LogUtils.setLogLevel(Log.VERBOSE);

@@ -188,10 +188,10 @@ public class AccessibilityUtil {
         return result;
     }
 
-    public static List<AccessibilityNodeInfo> findNodes(WidgetInfo target){
+    public static List<AccessibilityNodeInfo> findNodes(NewWidgetInfo target){
         List<AccessibilityNodeInfo> result = new ArrayList<>();
         for(AccessibilityNodeInfo node : getAllA11yNodeInfo(false)) {
-            WidgetInfo currentNodeInfo = WidgetInfo.create(node);
+            NewWidgetInfo currentNodeInfo = NewWidgetInfo.create(node);
             if (target.isSimilar(currentNodeInfo))
                 result.add(node);
         }

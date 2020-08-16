@@ -21,7 +21,6 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.os.Handler;
 import android.os.Trace;
 import android.util.Log;
 
@@ -47,9 +46,6 @@ import com.google.android.accessibility.switchaccess.ui.OptionScanHighlighter;
 import com.google.android.accessibility.switchaccess.ui.OverlayController;
 import com.google.android.accessibility.switchaccess.ui.OverlayController.MenuListener;
 import com.google.android.libraries.accessibility.utils.concurrent.ThreadUtils;
-import com.google.android.accessibility.switchaccess.TestExecutor.WidgetInfo;
-import com.google.android.accessibility.switchaccess.TestExecutor.SwitchAccessCommandExecutor;
-import com.google.android.accessibility.switchaccess.TestExecutor.WidgetUtil;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +53,8 @@ import java.util.Set;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import dev.navids.noidaccessibility.AccessibilityUtil;
+import dev.navids.noidaccessibility.NewSwitchAccessCommandExecutor;
+import dev.navids.noidaccessibility.NewSwitchAccessWidgetInfo;
 
 /**
  * Manages options in a tree of {@code TreeScanNode}s and traverses them as options are selected.
@@ -660,11 +658,13 @@ public class OptionManager implements SwitchAccessPreferenceChangedListener, Men
       }
     }
     SwitchAccessNodeCompat currentlyActiveNode = findCurrentlyActiveNode();
-    WidgetInfo widgetInfo = WidgetInfo.create(isGlobalMenuItem, isLastNode, currentlyActiveNode);
-    Log.i(SwitchAccessCommandExecutor.TAG,
-            String.format("-> Current %s, currentNode: %s",
+    NewSwitchAccessWidgetInfo widgetInfo = NewSwitchAccessWidgetInfo.create(isGlobalMenuItem, isLastNode, currentlyActiveNode);
+    Log.i(AccessibilityUtil.TAG,
+            String.format("-> Current  %s, currentNode: %s",
                     widgetInfo,
                     currentNode));
+    NewSwitchAccessCommandExecutor.currentRootNode = currentTreeRootNode;
+    NewSwitchAccessCommandExecutor.setFocusedNode(widgetInfo);
 //    if(currentlyActiveNode!= null)
 //      Log.i(SwitchAccessCommandExecutor.TAG, "CURRENT HASH " + currentlyActiveNode.unwrap().hashCode());
 //    Log.i(SwitchAccessCommandExecutor.TAG, "Layout");

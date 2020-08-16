@@ -17,22 +17,22 @@ import java.util.List;
 import java.util.Map;
 
 
-public class WidgetInfo {
+public class NewWidgetInfo {
     List<String> attributeNames = Arrays.asList(
             "resourceId", "contentDescription", "text", "class", "xpath");
     public static List<String> maskedAttributes = new ArrayList<>();
-    public List<WidgetInfo> leftContext = new ArrayList<>();
-    public List<WidgetInfo> rightContext = new ArrayList<>();
+    public List<NewWidgetInfo> leftContext = new ArrayList<>();
+    public List<NewWidgetInfo> rightContext = new ArrayList<>();
     public final static int contextSize = 3;
     Map<String, String> attributes = new HashMap<>();
     String locatedBy = "";
     AccessibilityNodeInfo node;
-    public static Map<AccessibilityNodeInfo, WidgetInfo> createdWidgets = new HashMap<>();
+    public static Map<AccessibilityNodeInfo, NewWidgetInfo> createdWidgets = new HashMap<>();
     public static void createAll(List<AccessibilityNodeInfo> nodes){
         createdWidgets.clear();
-        List<WidgetInfo> contextInfo = new ArrayList<>();
+        List<NewWidgetInfo> contextInfo = new ArrayList<>();
         for(AccessibilityNodeInfo node : nodes) {
-            WidgetInfo widgetInfo = WidgetInfo.create(node);
+            NewWidgetInfo widgetInfo = NewWidgetInfo.create(node);
             createdWidgets.put(node, widgetInfo);
             if(node.getChildCount() == 0 && node.isVisibleToUser())
                 contextInfo.add(widgetInfo);
@@ -48,9 +48,9 @@ public class WidgetInfo {
         }
     }
 
-    public static WidgetInfo create(AccessibilityNodeInfo node){
+    public static NewWidgetInfo create(AccessibilityNodeInfo node){
         if (node == null){
-            return new WidgetInfo("");
+            return new NewWidgetInfo("");
         }
         if(createdWidgets.containsKey(node))
             return createdWidgets.get(node);
@@ -58,7 +58,7 @@ public class WidgetInfo {
         String contentDescription = String.valueOf(node.getContentDescription());
         String text = String.valueOf(node.getText());
         String clsName = String.valueOf(node.getClassName());
-        WidgetInfo widgetInfo = new WidgetInfo(resourceId, contentDescription, text, clsName);
+        NewWidgetInfo widgetInfo = new NewWidgetInfo(resourceId, contentDescription, text, clsName);
         widgetInfo.setNodeCompat(node);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             widgetInfo.setXpath(widgetInfo.getXpath());
@@ -66,23 +66,23 @@ public class WidgetInfo {
         return widgetInfo;
     }
 
-    public static WidgetInfo getWidget(AccessibilityNodeInfo node){
+    public static NewWidgetInfo getWidget(AccessibilityNodeInfo node){
         if(node != null && createdWidgets.containsKey(node))
             return createdWidgets.get(node);
         return null;
     }
 
-    public WidgetInfo(String resourceId) {
+    public NewWidgetInfo(String resourceId) {
         this(resourceId, "", "", null);
     }
-    public static WidgetInfo createFromJson(JSONObject cmd) {
+    public static NewWidgetInfo createFromJson(JSONObject cmd) {
         if(cmd == null)
-            return new WidgetInfo("");
+            return new NewWidgetInfo("");
         String resourceId = (String) cmd.getOrDefault("resourceId", "");
         String contentDescription = (String) cmd.getOrDefault("contentDescription", "");
         String text = (String) cmd.getOrDefault("text", "");
         String clsName = (String) cmd.getOrDefault("class", "");
-        WidgetInfo widgetInfo = new WidgetInfo(resourceId, contentDescription,text, clsName);
+        NewWidgetInfo widgetInfo = new NewWidgetInfo(resourceId, contentDescription,text, clsName);
 
         String xpath = (String) cmd.getOrDefault("xpath", "");
         if(!xpath.equals("")) {
@@ -98,44 +98,44 @@ public class WidgetInfo {
         JSONArray leftContextJson = (JSONArray) cmd.getOrDefault("left_context", new JSONArray());
         for(int i=0; i<leftContextJson.size(); i++){
             JSONObject subCmd = (JSONObject) leftContextJson.get(i);
-            widgetInfo.leftContext.add(WidgetInfo.createFromJson(subCmd));
+            widgetInfo.leftContext.add(NewWidgetInfo.createFromJson(subCmd));
         }
         JSONArray rightContextJson = (JSONArray) cmd.getOrDefault("right_context", new JSONArray());
         for(int i=0; i<rightContextJson.size(); i++){
             JSONObject subCmd = (JSONObject) rightContextJson.get(i);
-            widgetInfo.rightContext.add(WidgetInfo.createFromJson(subCmd));
+            widgetInfo.rightContext.add(NewWidgetInfo.createFromJson(subCmd));
         }
         return widgetInfo;
     }
-    public WidgetInfo(String resourceId, String contentDescription, String text, String clsName) {
+    public NewWidgetInfo(String resourceId, String contentDescription, String text, String clsName) {
         attributes.put(attributeNames.get(0), resourceId);
         attributes.put(attributeNames.get(1), contentDescription);
         attributes.put(attributeNames.get(2), text);
         attributes.put(attributeNames.get(3), clsName);
     }
 
-    public boolean isSimilar(WidgetInfo other){
+    public boolean isSimilar(NewWidgetInfo other){
         boolean contentSimilar = isSimilarWithoutContext(other, maskedAttributes);
-        boolean contextSimilar = isSimilarContext(other);
+        boolean contextSimilar = true;isSimilarContext(other);
         return contentSimilar && contextSimilar;
     }
 
-    private boolean isSimilarWithoutContext(WidgetInfo other, List<String> myMaskedAttributes){
-        // TODO: it's not correct, e.g., id != id , cd == cd => similar
-        boolean isSimilar = true;
-        for(String attrName : attributeNames){
-            if(myMaskedAttributes.contains(attrName))
-                continue;
-            boolean isSimilarAttribute = isSimilarAttribute(other, attrName);
-            if(isLocatedBy(attrName) || other.isLocatedBy(attrName))
-                return isSimilarAttribute;
-            if(!attrName.equals("xpath"))
-                isSimilar &= isSimilarAttribute;
-        }
-        return isSimilar;
+    private boolean isSimilarWithoutContext(NewWidgetInfo other, List<String> myMaskedAttributes){
+        return this.getAttr("xpath").equals(other.getAttr("xpath"));
+//        boolean isSimilar = true;
+//        for(String attrName : attributeNames){
+//            if(myMaskedAttributes.contains(attrName))
+//                continue;
+//            boolean isSimilarAttribute = isSimilarAttribute(other, attrName);
+//            if(isLocatedBy(attrName) || other.isLocatedBy(attrName))
+//                return isSimilarAttribute;
+//            if(!attrName.equals("xpath"))
+//                isSimilar &= isSimilarAttribute;
+//        }
+//        return isSimilar;
     }
 
-    private boolean isSimilarContext(WidgetInfo other){
+    private boolean isSimilarContext(NewWidgetInfo other){
         int thisLeftSize = Integer.min(contextSize, this.leftContext.size());
         int thisRightSize = Integer.min(contextSize, this.rightContext.size());
         int otherLeftSize = Integer.min(contextSize, other.leftContext.size());
@@ -166,10 +166,10 @@ public class WidgetInfo {
 
     public boolean hasAttr(String attributeName){
         String s = attributes.getOrDefault(attributeName, "");
-        return !s.equals("") && !s.equals("null");
+        return s != null && !s.equals("") && !s.equals("null");
     }
 
-    public boolean isSimilarAttribute(WidgetInfo other, String attributeName){
+    public boolean isSimilarAttribute(NewWidgetInfo other, String attributeName){
         if(this.isLocatedBy(attributeName) || other.isLocatedBy(attributeName))
             if(!this.hasAttr(attributeName) || !other.hasAttr(attributeName))
                 return false;
@@ -178,7 +178,7 @@ public class WidgetInfo {
         return getAttr(attributeName).equals(other.getAttr(attributeName));
     }
 
-    public boolean similarXpath(WidgetInfo other){
+    public boolean similarXpath(NewWidgetInfo other){
         return this.getXpath().contains(other.getXpath()) || other.getXpath().contains(this.getXpath());
     }
 
@@ -211,6 +211,8 @@ public class WidgetInfo {
             String itClsName = String.valueOf(it.getClassName());
             for(int i=0; i<it.getParent().getChildCount(); i++) {
                 String childClsName = String.valueOf(it.getParent().getChild(i).getClassName());
+                if(!it.getParent().getChild(i).isVisibleToUser())
+                    continue;
                 if (itClsName.equals(childClsName))
                     length++;
                 if(it.getParent().getChild(i).equals(it)) {

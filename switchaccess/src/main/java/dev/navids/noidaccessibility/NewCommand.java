@@ -1,9 +1,9 @@
 package dev.navids.noidaccessibility;
 
-public class Command {
+public class NewCommand {
 
 
-    WidgetInfo widgetInfo;
+    NewWidgetInfo widgetInfo;
     
     String action;
     String actionExtra;
@@ -18,17 +18,17 @@ public class Command {
     public final static String CMD_TYPE = "TYPE";
     public final static String CMD_ASSERT = "ASSERT";
 
-    public Command(WidgetInfo widgetInfo, String action) {
+    public NewCommand(NewWidgetInfo widgetInfo, String action) {
         this(widgetInfo, action, null);
     }
 
-    public Command(WidgetInfo widgetInfo, String action, String actionExtra) {
+    public NewCommand(NewWidgetInfo widgetInfo, String action, String actionExtra) {
         this.widgetInfo = widgetInfo;
         this.action = action;
         this.actionExtra = actionExtra;
     }
 
-    public WidgetInfo getTargetWidgetInfo() {
+    public NewWidgetInfo getTargetWidgetInfo() {
         return widgetInfo;
     }
 

@@ -1,7 +1,6 @@
 package dev.navids.noidaccessibility;
 
 
-import android.accessibilityservice.AccessibilityService;
 import android.os.Handler;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
@@ -41,7 +40,7 @@ public class CLIController {
 
             }
             else {
-                WidgetInfo.createAll(AccessibilityUtil.getAllA11yNodeInfo(false));
+                NewWidgetInfo.createAll(AccessibilityUtil.getAllA11yNodeInfo(false));
                 if (nextCommand.equals("log")) {
                     Log.i(AccessibilityUtil.TAG, "CMD: log");
                     logCurrentState();
@@ -49,16 +48,16 @@ public class CLIController {
                 } else if (nextCommand.equals("log_widgets")) {
                     Log.i(AccessibilityUtil.TAG, "CMD: log_widgets");
                     for (AccessibilityNodeInfo node : AccessibilityUtil.getAllA11yNodeInfo(false))
-                        Log.i(AccessibilityUtil.TAG,  "  " + WidgetInfo.getWidget(node));
+                        Log.i(AccessibilityUtil.TAG,  "  " + NewWidgetInfo.getWidget(node));
                     clearCommandFile();
                 } else if (nextCommand.startsWith("mask_")) {
                     Log.i(AccessibilityUtil.TAG, "CMD: mask");
                     String[] tokens = nextCommand.split("_");
                     Log.i(AccessibilityUtil.TAG, "tokens " + tokens);
-                    WidgetInfo.maskedAttributes.clear();
+                    NewWidgetInfo.maskedAttributes.clear();
                     for (int i = 1; i < tokens.length; i++) {
                         Log.i(AccessibilityUtil.TAG, "  token " + tokens[i]);
-                        WidgetInfo.maskedAttributes.add(tokens[i]);
+                        NewWidgetInfo.maskedAttributes.add(tokens[i]);
                     }
                     clearCommandFile();
                 } else if (nextCommand.equals("init")) {

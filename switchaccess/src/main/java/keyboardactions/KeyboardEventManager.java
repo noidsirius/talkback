@@ -32,9 +32,11 @@ import com.google.android.accessibility.switchaccess.PointScanManager;
 import com.google.android.accessibility.switchaccess.R;
 import com.google.android.accessibility.switchaccess.SwitchAccessPreferenceUtils;
 import com.google.android.accessibility.switchaccess.keyboardactions.KeyboardAction.KeyboardActionListener;
-import com.google.android.accessibility.switchaccess.TestExecutor.SwitchAccessCommandExecutor;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import dev.navids.noidaccessibility.NewSwitchAccessCommandExecutor;
 
 /**
  * Manage key events for Switch Access, dispatching them as needed to the option manager or global
@@ -268,7 +270,7 @@ public class KeyboardEventManager {
    */
   public boolean onKeyEvent(
       KeyEvent keyEvent, KeyboardActionListener keyboardActionListener, Context context) {
-      SwitchAccessCommandExecutor.LAST_DOWN_TIME = keyEvent.getDownTime();
+      NewSwitchAccessCommandExecutor.LAST_DOWN_TIME = keyEvent.getDownTime();
     for (KeyboardAction keyboardAction : keyboardActions) {
       if (keyboardAction.onKeyEvent(keyEvent, keyboardActionListener, context)) {
         PerformanceMonitor.getOrCreateInstance()
