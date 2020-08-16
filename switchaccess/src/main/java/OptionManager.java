@@ -21,7 +21,9 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Handler;
 import android.os.Trace;
+import android.util.Log;
 
 import androidx.annotation.VisibleForTesting;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
@@ -47,11 +49,14 @@ import com.google.android.accessibility.switchaccess.ui.OverlayController.MenuLi
 import com.google.android.libraries.accessibility.utils.concurrent.ThreadUtils;
 import com.google.android.accessibility.switchaccess.TestExecutor.WidgetInfo;
 import com.google.android.accessibility.switchaccess.TestExecutor.SwitchAccessCommandExecutor;
+import com.google.android.accessibility.switchaccess.TestExecutor.WidgetUtil;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.checkerframework.checker.nullness.qual.Nullable;
+
+import dev.navids.noidaccessibility.AccessibilityUtil;
 
 /**
  * Manages options in a tree of {@code TreeScanNode}s and traverses them as options are selected.
@@ -634,9 +639,13 @@ public class OptionManager implements SwitchAccessPreferenceChangedListener, Men
     }
   }
 
+  private boolean hasSeen = false;
+
   private void onNodeFocused(boolean isFocusingFirstNodeInTree, ScanStateChangeTrigger trigger) {
+    hasSeen = false;
     boolean isGlobalMenuItem = false;
     boolean isLastNode = false;
+//    SwitchAccessCommandExecutor.getAllNodes(currentTreeRootNode);
     if(currentNode != null) {
       if(currentNode instanceof TreeScanSelectionNode){
         TreeScanSelectionNode treeScanSelectionNode = (TreeScanSelectionNode) currentNode;
@@ -652,7 +661,28 @@ public class OptionManager implements SwitchAccessPreferenceChangedListener, Men
     }
     SwitchAccessNodeCompat currentlyActiveNode = findCurrentlyActiveNode();
     WidgetInfo widgetInfo = WidgetInfo.create(isGlobalMenuItem, isLastNode, currentlyActiveNode);
-    SwitchAccessCommandExecutor.manageCommands(widgetInfo);
+    Log.i(SwitchAccessCommandExecutor.TAG,
+            String.format("-> Current %s, currentNode: %s",
+                    widgetInfo,
+                    currentNode));
+//    if(currentlyActiveNode!= null)
+//      Log.i(SwitchAccessCommandExecutor.TAG, "CURRENT HASH " + currentlyActiveNode.unwrap().hashCode());
+//    Log.i(SwitchAccessCommandExecutor.TAG, "Layout");
+//    WidgetUtil.getAllA11yNodeInfo(SwitchAccessService.getInstance().getRootInActiveWindow());
+//    WidgetUtil.alaki(widgetInfo, currentTreeRootNode,  SwitchAccessService.getInstance().getRootInActiveWindow(), targetWidget);
+// TODO: Change it to dev.navids
+//    if(!(currentNode instanceof ShowActionsMenuNode))
+//      new Handler().post(() -> SwitchAccessCommandExecutor.manageCommands(widgetInfo));
+//    else {
+//      Log.i(SwitchAccessCommandExecutor.TAG, "I ignored the onNodeFocused");
+//      hasSeen = true;
+//      new Handler().postDelayed(() -> {
+//        if(hasSeen) {
+//          SwitchAccessCommandExecutor.performNext();
+//        }
+//      }, 1000);
+//    }
+
     if (scanListener != null) {
       if (currentNode instanceof ClearFocusNode) {
         signalFocusClearedWithoutSelection(trigger);
