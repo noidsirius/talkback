@@ -129,7 +129,7 @@ public class SwitchAccessCommandExecutor {
                                 performSelect();
                             } else if (command.getAction().equals(Command.CMD_TYPE)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do TYPE AND NEXT");
-                                performType(focusedNode.getSwitchAccessNodeCompat(), command.getActionExtra());
+                                AccessibilityUtil.performType(focusedNode.getSwitchAccessNodeCompat().unwrap(), command.getActionExtra());
                                 command.numberOfActions++;
                                 performNext();
                             } else {
@@ -201,14 +201,6 @@ public class SwitchAccessCommandExecutor {
                 }
             }, 100);
         }
-    }
-
-    public static void performType(SwitchAccessNodeCompat node, String message){
-//        Log.i(TAG, " ======== BEGINNING of TYPE");
-        Bundle arguments = new Bundle();
-        arguments.putCharSequence(SwitchAccessNodeCompat
-                .ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, message);
-        node.performAction(SwitchAccessNodeCompat.ACTION_SET_TEXT, arguments);
     }
 
     public static Map<AccessibilityNodeInfo, SwitchAccessNodeCompat> getAllNodes(TreeScanNode root){

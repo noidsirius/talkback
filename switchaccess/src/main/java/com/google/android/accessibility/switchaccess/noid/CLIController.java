@@ -98,6 +98,10 @@ public class CLIController {
                         Log.i(AccessibilityUtil.TAG, "CMD: The current executor is set to SwitchAccess");
                         CommandManager.setTestExecutor(RegularCommandExecutor::executeCommand);
                     }
+                    else if(executor.equals("talk")) {
+                        Log.i(AccessibilityUtil.TAG, "CMD: The current executor is set to TalkBack");
+                        CommandManager.setTestExecutor(TalkBackCommandExecutor::executeCommand);
+                    }
                     else
                         Log.i(AccessibilityUtil.TAG, "CMD: The requested executor is unknown! " + executor);
                     clearCommandFile();
@@ -133,6 +137,8 @@ public class CLIController {
         if(event.getEventType() == AccessibilityEvent.TYPE_VIEW_CLICKED
         ||event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED)
             Log.i(AccessibilityUtil.TAG, "Event " + AccessibilityEvent.eventTypeToString(event.getEventType()));
+        if(event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED)
+            TalkBackCommandExecutor.setFocusedNode(event.getSource());
 
     }
 

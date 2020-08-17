@@ -45,6 +45,7 @@ import android.provider.Settings;
 import androidx.annotation.VisibleForTesting;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -736,6 +737,7 @@ public class TalkBackService extends AccessibilityService
     if (!isServiceActive()) {
       return false;
     }
+    Log.i("NOID_TB", "onGesture " + gestureId);
 
     Performance perf = Performance.getInstance();
     EventId eventId = perf.onGestureEventReceived(gestureId);

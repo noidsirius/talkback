@@ -10,8 +10,6 @@ import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
-import androidx.annotation.RequiresApi;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -21,7 +19,6 @@ import java.util.List;
 public class AccessibilityUtil {
     AccessibilityService accessibilityService;
     AccessibilityService.GestureResultCallback defaultCallBack;
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public AccessibilityUtil(AccessibilityService accessibilityService) {
         this.accessibilityService = accessibilityService;
         defaultCallBack = new AccessibilityService.GestureResultCallback() {
@@ -83,36 +80,14 @@ public class AccessibilityUtil {
     public static final String INSTRUMENT_TAG = "NOID_INSTRUMENT";
     public static final int tapDuration = 100;
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public boolean performTap(int x, int y){ return performTap(x, y, tapDuration); }
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public boolean performTap(int x, int y, int duration){ return performTap(x, y, 0, duration); }
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public boolean performTap(int x, int y, int startTime, int duration){ return performTap(x, y, startTime, duration, defaultCallBack); }
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public boolean performTap(int x, int y, int startTime, int duration, AccessibilityService.GestureResultCallback callback){
         GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
         Path swipePath = new Path();
         swipePath.moveTo(x, y);
         gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, startTime, duration));
-        GestureDescription gestureDescription = gestureBuilder.build();
-        Log.i(TAG, "Execute Gesture " + gestureDescription.toString());
-        return accessibilityService.dispatchGesture(gestureDescription, callback, null);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    public boolean performNext(AccessibilityService.GestureResultCallback callback){
-        Log.i(TAG, "performNext");
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
-        Path swipePath = new Path();
-        swipePath.moveTo(300, 500);
-        swipePath.lineTo(700, 500);
-        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 200));
         GestureDescription gestureDescription = gestureBuilder.build();
         Log.i(TAG, "Execute Gesture " + gestureDescription.toString());
         return accessibilityService.dispatchGesture(gestureDescription, callback, null);
@@ -126,7 +101,6 @@ public class AccessibilityUtil {
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public boolean performDoubleTap(){
         Log.i(TAG, "performDoubleTap");
         try {
@@ -135,13 +109,9 @@ public class AccessibilityUtil {
             e.printStackTrace();
         }
         return performDoubleTap(0, 0); }
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public boolean performDoubleTap(int x, int y){ return performDoubleTap(x, y, tapDuration); }
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public boolean performDoubleTap(int x, int y, int duration){ return performDoubleTap(x, y, 0, duration); }
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public boolean performDoubleTap(int x, int y, int startTime, int duration){ return performDoubleTap(x, y, startTime, duration, defaultCallBack); }
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public boolean performDoubleTap(final int x, final int y, final int startTime, final int duration, final AccessibilityService.GestureResultCallback callback){
         AccessibilityService.GestureResultCallback newClickCallBack = new AccessibilityService.GestureResultCallback() {
             @Override
