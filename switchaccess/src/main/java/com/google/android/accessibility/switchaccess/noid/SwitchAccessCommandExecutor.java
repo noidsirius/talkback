@@ -77,8 +77,18 @@ public class SwitchAccessCommandExecutor {
                 if(similarNodes.size() == 0){
                     Log.i(AccessibilityUtil.TAG, "The target widget could not be found in current screen.");
                     command.numberOfAttempts++;
-                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT)
-                        command.setExecutionState(Command.FAILED);
+                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT) {
+                        Log.i(AccessibilityUtil.TAG, "Couldn't locate the widget, Execute the command using regular test executor");
+                        List<String> maskedAttributes = new ArrayList<>(WidgetInfo.maskedAttributes);
+                        WidgetInfo.maskedAttributes.clear();
+                        RegularCommandExecutor.executeCommand(command);
+                        WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
+                        if(command.getExecutionState() == Command.COMPLETED)
+                            command.setExecutionState(Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT);
+                        else
+                            command.setExecutionState(Command.FAILED);
+                        return command.getExecutionState();
+                    }
                 }
                 else if(similarNodes.size() > 1){
                     Log.i(AccessibilityUtil.TAG, "There are more than one candidates for the target.");
@@ -86,14 +96,33 @@ public class SwitchAccessCommandExecutor {
                         Log.i(AccessibilityUtil.TAG, " Node: " + node);
                     }
                     command.numberOfAttempts++;
-                    if(command.numberOfAttempts >= command.MAX_ATTEMPT)
-                        command.setExecutionState(Command.FAILED);
+                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT) {
+                        Log.i(AccessibilityUtil.TAG, "Couldn't locate the widget, Execute the command using regular test executor");
+                        List<String> maskedAttributes = new ArrayList<>(WidgetInfo.maskedAttributes);
+                        WidgetInfo.maskedAttributes.clear();
+                        RegularCommandExecutor.executeCommand(command);
+                        WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
+                        if(command.getExecutionState() == Command.COMPLETED)
+                            command.setExecutionState(Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT);
+                        else
+                            command.setExecutionState(Command.FAILED);
+                        return command.getExecutionState();
+                    }
                 }
                 else{
                     AccessibilityNodeInfo node = similarNodes.get(0);
                     // TODO: check if something inside focusedNode is equal to the node
                     if(focusedNode != null && focusedNode.getSwitchAccessNodeCompat() != null) {
                         AccessibilityNodeInfo it = node;
+                        int trackAction = command.trackAction(focusedNode.getSwitchAccessNodeCompat().unwrap());
+                        Log.i(AccessibilityUtil.TAG, String.format("The following widget has been visited %d times: %s", trackAction, WidgetInfo.create(node)));
+                        if(trackAction > Command.MAX_VISITED_WIDGET){
+                            Log.i(AccessibilityUtil.TAG, "Execute the command using regular test executor");
+                            RegularCommandExecutor.executeCommand(command);
+                            if(command.getExecutionState() == Command.COMPLETED)
+                                command.setExecutionState(Command.COMPLETED_BY_REGULAR);
+                            return command.getExecutionState();
+                        }
                         boolean isSimilar = false;
                         SwitchAccessNodeCompat firstReachableNodeCompat = null;
                         Map<AccessibilityNodeInfo, SwitchAccessNodeCompat> allNodeCompats = getAllNodes(currentRootNode);
@@ -125,12 +154,12 @@ public class SwitchAccessCommandExecutor {
                                 Log.i(AccessibilityUtil.TAG, "--- Do ASSERT");
                             } else if (command.getAction().equals(Command.CMD_CLICK)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do CLICK");
-                                command.numberOfActions++;
+//                                command.numberOfActions++;
                                 performSelect();
                             } else if (command.getAction().equals(Command.CMD_TYPE)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do TYPE AND NEXT");
                                 AccessibilityUtil.performType(focusedNode.getSwitchAccessNodeCompat().unwrap(), command.getActionExtra());
-                                command.numberOfActions++;
+//                                command.numberOfActions++;
                                 performNext();
                             } else {
                                 Log.i(AccessibilityUtil.TAG, "Command's action is unknown " + command.getAction());
@@ -138,13 +167,13 @@ public class SwitchAccessCommandExecutor {
                             command.setExecutionState(Command.COMPLETED);
                         } else {
                             Log.i(AccessibilityUtil.TAG, "--- Do NEXT");
-                            command.numberOfActions++;
+//                            command.numberOfActions++;
                             performNext();
                         }
                     }
                     else{
                         Log.i(AccessibilityUtil.TAG, "--- Node is not focused. Do NEXT");
-                        command.numberOfActions++;
+//                        command.numberOfActions++;
                         performNext();
                     }
                     return command.getExecutionState();
@@ -236,7 +265,7 @@ public class SwitchAccessCommandExecutor {
     }
 
     private static void addItemNodesToSet(TreeScanNode startNode, List<TreeScanSystemProvidedNode> nodeSet, String prefix) {
-        Log.i(AccessibilityUtil.TAG, prefix + "Node: " + startNode);
+//        Log.i(AccessibilityUtil.TAG, prefix + "Node: " + startNode);
         if (startNode instanceof TreeScanSystemProvidedNode) {
             nodeSet.add((TreeScanSystemProvidedNode) startNode);
         }

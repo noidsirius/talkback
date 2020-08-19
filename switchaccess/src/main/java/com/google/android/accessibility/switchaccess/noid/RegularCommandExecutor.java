@@ -35,6 +35,8 @@ public class RegularCommandExecutor{
                 }
                 else{
                     AccessibilityNodeInfo node = similarNodes.get(0);
+                    int trackAction = command.trackAction(node);
+                    Log.i(AccessibilityUtil.TAG, String.format("The following widget has been visited %d times: %s", trackAction, WidgetInfo.create(node)));
                     WidgetInfo currentNodeInfo = WidgetInfo.create(node);
                     if (command.getAction().equals(Command.CMD_ASSERT)) {
                         Log.i(AccessibilityUtil.TAG, "--- Do ASSERT");
@@ -52,18 +54,18 @@ public class RegularCommandExecutor{
                                 command.setExecutionState(Command.FAILED);
                             } else {
                                 clickableNode.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                                command.numberOfActions++;
+//                                command.numberOfActions++;
                                 command.setExecutionState(Command.COMPLETED);
                             }
                         }
                         else{
-                            command.numberOfActions++;
+//                            command.numberOfActions++;
                             command.setExecutionState(Command.COMPLETED);
                         }
                     } else if (command.getAction().equals(Command.CMD_TYPE)) {
                         Log.i(AccessibilityUtil.TAG, "--- Do TYPE AND NEXT");
                         AccessibilityUtil.performType(currentNodeInfo.getNodeCompat(), command.getActionExtra());
-                        command.numberOfActions++;
+//                        command.numberOfActions++;
                         command.setExecutionState(Command.COMPLETED);
 
                     } else {

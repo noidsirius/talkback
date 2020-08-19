@@ -116,48 +116,54 @@ public class WidgetInfo {
 
     public boolean isSimilar(WidgetInfo other){
         boolean contentSimilar = isSimilarWithoutContext(other, maskedAttributes);
-        boolean contextSimilar = true;isSimilarContext(other);
+        boolean contextSimilar = isSimilarContext(other);
         return contentSimilar && contextSimilar;
     }
 
     private boolean isSimilarWithoutContext(WidgetInfo other, List<String> myMaskedAttributes){
-        return this.getAttr("xpath").equals(other.getAttr("xpath"));
-//        boolean isSimilar = true;
-//        for(String attrName : attributeNames){
-//            if(myMaskedAttributes.contains(attrName))
-//                continue;
-//            boolean isSimilarAttribute = isSimilarAttribute(other, attrName);
-//            if(isLocatedBy(attrName) || other.isLocatedBy(attrName))
-//                return isSimilarAttribute;
-//            if(!attrName.equals("xpath"))
-//                isSimilar &= isSimilarAttribute;
-//        }
-//        return isSimilar;
+        boolean isSimilar = true;
+        for(String attrName : attributeNames){
+            if(myMaskedAttributes.contains(attrName))
+                continue;
+            boolean isSimilarAttribute = isSimilarAttribute(other, attrName);
+            if(isLocatedBy(attrName) || other.isLocatedBy(attrName))
+                return isSimilarAttribute;
+            if(!attrName.equals("xpath"))
+                isSimilar &= isSimilarAttribute;
+        }
+        return isSimilar;
     }
 
     private boolean isSimilarContext(WidgetInfo other){
-        int thisLeftSize = Integer.min(contextSize, this.leftContext.size());
-        int thisRightSize = Integer.min(contextSize, this.rightContext.size());
-        int otherLeftSize = Integer.min(contextSize, other.leftContext.size());
-        int otherRightSize = Integer.min(contextSize, other.rightContext.size());
+        if(maskedAttributes.contains("context"))
+            return true;
+        boolean result = true;
+        if(!maskedAttributes.contains("leftcontext"))
+            result &= isSimilarPartialContext(this.leftContext, other.leftContext);
+        if(!maskedAttributes.contains("rightcontext"))
+            result &= isSimilarPartialContext(this.rightContext, other.rightContext);
+        return result;
+    }
+
+    private boolean isSimilarPartialContext(List<WidgetInfo> thisPartialContext, List<WidgetInfo> otherPartialContext) {
+        boolean similarLeftContext = true;
+        int thisLeftSize = Integer.min(contextSize, thisPartialContext.size());
+        int otherLeftSize = Integer.min(contextSize, otherPartialContext.size());
         if(thisLeftSize != otherLeftSize)
-            return false;
-        if(thisRightSize != otherRightSize)
-            return false;
-        // The contexts do not have xpath
-        List<String> myMaskedAttributes = new ArrayList<>(maskedAttributes);
-        myMaskedAttributes.add("xpath");
-        int mismatches = 0;
-        for(int i=0; i<thisLeftSize; i++) {
-            if (!this.leftContext.get(i).isSimilarWithoutContext(other.leftContext.get(i), myMaskedAttributes))
-                mismatches++;
+            similarLeftContext = false;
+        else {
+            // The contexts do not have xpath
+            List<String> myMaskedAttributes = new ArrayList<>(maskedAttributes);
+            myMaskedAttributes.add("xpath");
+            int mismatches = 0;
+            for (int i = 0; i < thisLeftSize; i++) {
+                if (!thisPartialContext.get(i).isSimilarWithoutContext(otherPartialContext.get(i), myMaskedAttributes))
+                    mismatches++;
+            }
+            // TODO: CONFIGURABLE
+            similarLeftContext = mismatches <= 1;
         }
-        for(int i=0; i<thisRightSize; i++) {
-            if (!this.rightContext.get(i).isSimilarWithoutContext(other.rightContext.get(i), myMaskedAttributes))
-                mismatches++;
-        }
-        // TODO: CONFIGURABLE
-        return mismatches <= 1;
+        return similarLeftContext;
     }
 
     public String getAttr(String attributeName){

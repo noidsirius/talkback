@@ -17,6 +17,8 @@ import java.util.List;
 public class CommandManager {
     public static int lastCommandIndex = -1;
     public static List<Command> commandList = new ArrayList<>();
+    private static long startTime = -1;
+    private static long endTime = -1;
 
     public interface TestExecutor{
         int executeCommand(Command cmd);
@@ -36,16 +38,39 @@ public class CommandManager {
         if(lastCommandIndex < 0) {
             return false;
         }
+        if(lastCommandIndex == 0)
+            startTime = System.currentTimeMillis();
         if(!isNext)
             lastCommandIndex--;
         if(lastCommandIndex >= commandList.size()) {
             Log.i(AccessibilityUtil.TAG, "----------The test case is completed!---------");
+            if(endTime == -1)
+                endTime = System.currentTimeMillis();
+            long totalTime = endTime -  startTime;
+            long totalEvents = 0;
+            long meanTime = 0;
+            int meanEventCount = 0;
+            int completeCount = 0;
+            int unlocatedCount = 0;
+            int unreachableCount = 0;
             for(int i=0; i<commandList.size(); i++) {
                 Command cmd = commandList.get(i);
-                Log.i(AccessibilityUtil.TAG, String.format("   CMD %d. State: %s, #Actions: %d, Target: %s on Widget %s",
-                        i + 1, Command.getActionStr(cmd.getExecutionState()), cmd.numberOfActions,
-                        cmd.getAction(), cmd.getTargetWidgetInfo().getAttr("xpath")));
+                meanTime += cmd.getTime();
+                meanEventCount += cmd.getNumberOfActions();
+                totalEvents += cmd.getNumberOfActions();
+                if(cmd.getExecutionState() == Command.COMPLETED)
+                    completeCount++;
+                else if(cmd.getExecutionState() == Command.COMPLETED_BY_REGULAR)
+                    unreachableCount++;
+                else if(cmd.getExecutionState() == Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT)
+                    unlocatedCount++;
+                Log.i(AccessibilityUtil.TAG, String.format("   CMD: %d $ State: %s $ #Events: %d $ Time: %d",
+                        i + 1, Command.getActionStr(cmd.getExecutionState()), cmd.getNumberOfActions(), cmd.getTime()));
             }
+            meanTime /= commandList.size();
+            meanEventCount /= commandList.size();
+            Log.i(AccessibilityUtil.TAG, String.format("Total Time: %d $ Mean Time: %d $ Total Events: %d $ Mean Event: %d", totalTime, meanTime, totalEvents, meanEventCount));
+            Log.i(AccessibilityUtil.TAG, String.format("Completed Steps: %d $ Unlocatable Steps: %d $ Unreachable Steps: %d", completeCount, unlocatedCount, unreachableCount));
             return false;
         }
         Log.i(AccessibilityUtil.TAG, "Executing command " + (lastCommandIndex+1) + " Masks " + WidgetInfo.maskedAttributes);
@@ -55,7 +80,9 @@ public class CommandManager {
         if(currentCommand.getExecutionState() == Command.FAILED)
             currentCommand.setExecutionState(Command.NOT_STARTED);
         int result = executeCommand(currentCommand);
-        if(result == Command.COMPLETED) {
+        if(result == Command.COMPLETED
+                || result == Command.COMPLETED_BY_REGULAR
+                || result == Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT) {
             Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex+1) + " is completed!");
             lastCommandIndex++;
         }
@@ -68,6 +95,8 @@ public class CommandManager {
 
     public static void initCommands(){
         commandList.clear();
+        startTime = -1;
+        endTime = -1;
         String fileName = "test_guideline.json";
         // TODO: check context.getFilesDir().getPath();
         String dir = "/data/local/tmp/";

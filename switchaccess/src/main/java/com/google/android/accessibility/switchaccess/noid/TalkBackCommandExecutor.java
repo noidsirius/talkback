@@ -12,6 +12,7 @@ import androidx.annotation.RequiresApi;
 
 import com.android.switchaccess.SwitchAccessService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,8 +61,18 @@ public class TalkBackCommandExecutor {
                 if(similarNodes.size() == 0){
                     Log.i(AccessibilityUtil.TAG, "The target widget could not be found in current screen.");
                     command.numberOfAttempts++;
-                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT)
-                        command.setExecutionState(Command.FAILED);
+                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT) {
+                        Log.i(AccessibilityUtil.TAG, "Couldn't locate the widget, Execute the command using regular test executor");
+                        List<String> maskedAttributes = new ArrayList<>(WidgetInfo.maskedAttributes);
+                        WidgetInfo.maskedAttributes.clear();
+                        RegularCommandExecutor.executeCommand(command);
+                        WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
+                        if(command.getExecutionState() == Command.COMPLETED)
+                            command.setExecutionState(Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT);
+                        else
+                            command.setExecutionState(Command.FAILED);
+                        return command.getExecutionState();
+                    }
                 }
                 else if(similarNodes.size() > 1){
                     Log.i(AccessibilityUtil.TAG, "There are more than one candidates for the target.");
@@ -69,12 +80,31 @@ public class TalkBackCommandExecutor {
                         Log.i(AccessibilityUtil.TAG, " Node: " + node);
                     }
                     command.numberOfAttempts++;
-                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT)
-                        command.setExecutionState(Command.FAILED);
+                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT) {
+                        Log.i(AccessibilityUtil.TAG, "Couldn't locate the widget, Execute the command using regular test executor");
+                        List<String> maskedAttributes = new ArrayList<>(WidgetInfo.maskedAttributes);
+                        WidgetInfo.maskedAttributes.clear();
+                        RegularCommandExecutor.executeCommand(command);
+                        WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
+                        if(command.getExecutionState() == Command.COMPLETED)
+                            command.setExecutionState(Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT);
+                        else
+                            command.setExecutionState(Command.FAILED);
+                        return command.getExecutionState();
+                    }
                 }
                 else{
                     AccessibilityNodeInfo node = similarNodes.get(0);
                     if(focusedNode != null) {
+                        int trackAction = command.trackAction(focusedNode);
+                        Log.i(AccessibilityUtil.TAG, String.format("The following widget has been visited %d times: %s", trackAction, WidgetInfo.create(focusedNode)));
+                        if(trackAction > Command.MAX_VISITED_WIDGET){
+                            Log.i(AccessibilityUtil.TAG, "Execute the command using regular test executor");
+                            RegularCommandExecutor.executeCommand(command);
+                            if(command.getExecutionState() == Command.COMPLETED)
+                                command.setExecutionState(Command.COMPLETED_BY_REGULAR);
+                            return command.getExecutionState();
+                        }
                         AccessibilityNodeInfo it = node;
                         boolean isSimilar = false;
                         AccessibilityNodeInfo firstReachableNode = null;
@@ -93,12 +123,12 @@ public class TalkBackCommandExecutor {
                                 Log.i(AccessibilityUtil.TAG, "--- Do ASSERT");
                             } else if (command.getAction().equals(Command.CMD_CLICK)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do CLICK");
-                                command.numberOfActions++;
+//                                command.numberOfActions++;
                                 accessibilityUtil.performDoubleTap();
                             } else if (command.getAction().equals(Command.CMD_TYPE)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do TYPE AND NEXT");
                                 AccessibilityUtil.performType(focusedNode, command.getActionExtra());
-                                command.numberOfActions++;
+//                                command.numberOfActions++;
                                 performNext(null);
                             } else {
                                 Log.i(AccessibilityUtil.TAG, "Command's action is unknown " + command.getAction());
@@ -106,13 +136,13 @@ public class TalkBackCommandExecutor {
                             command.setExecutionState(Command.COMPLETED);
                         } else {
                             Log.i(AccessibilityUtil.TAG, "--- Do NEXT");
-                            command.numberOfActions++;
+//                            command.numberOfActions++;
                             performNext(null);
                         }
                     }
                     else{
                         Log.i(AccessibilityUtil.TAG, "--- Node is not focused. Do NEXT");
-                        command.numberOfActions++;
+//                        command.numberOfActions++;
                         performNext(null);
                     }
                     return command.getExecutionState();
