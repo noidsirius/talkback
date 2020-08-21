@@ -2,6 +2,7 @@ package com.google.android.accessibility.switchaccess.noid;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
+import android.content.Context;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.os.Build;
@@ -10,11 +11,20 @@ import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckPreset;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResultUtils;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheck;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
+import com.google.android.apps.common.testing.accessibility.framework.checks.SpeakableTextPresentCheck;
+import com.google.android.apps.common.testing.accessibility.framework.uielement.AccessibilityHierarchyAndroid;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class AccessibilityUtil {
     AccessibilityService accessibilityService;
@@ -156,6 +166,29 @@ public class AccessibilityUtil {
         for(int i=0; i<rootNode.getChildCount(); i++)
             result.addAll(getAllA11yNodeInfo(rootNode.getChild(i), " " +prefix+rootNode.getClassName()+"/", log));
         return result;
+    }
+
+    public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode, boolean justError){
+        Context context = com.android.switchaccess.SwitchAccessService.getInstance().getApplicationContext();
+        Set<AccessibilityHierarchyCheck> checks =
+                AccessibilityCheckPreset.getAccessibilityHierarchyChecksForPreset(
+                        AccessibilityCheckPreset.LATEST);
+        AccessibilityCheckPreset.getHierarchyCheckForClass(SpeakableTextPresentCheck.class);
+        AccessibilityHierarchyAndroid hierarchy = AccessibilityHierarchyAndroid.newBuilder(rootNode, context).build();
+        List<AccessibilityHierarchyCheckResult> results = new ArrayList<>();
+        for (AccessibilityHierarchyCheck check : checks) {
+            results.addAll(check.runCheckOnHierarchy(hierarchy));
+        }
+        List<AccessibilityHierarchyCheckResult> returnedResult = AccessibilityCheckResultUtils.getResultsForType(
+                results, AccessibilityCheckResult.AccessibilityCheckResultType.ERROR);
+        if(!justError)
+            returnedResult.addAll(AccessibilityCheckResultUtils.getResultsForType(
+                    results, AccessibilityCheckResult.AccessibilityCheckResultType.WARNING));
+        return returnedResult;
+    }
+
+    public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode){
+        return getA11yIssues(rootNode, true);
     }
 
     public static List<AccessibilityNodeInfo> findNodes(WidgetInfo target){

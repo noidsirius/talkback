@@ -7,6 +7,9 @@ dependencies {
 //    implementation project(':proguard')  // Only exists in github repo.
     implementation project(':utils')
     implementation project(':compositor')
+    implementation (project(path: ':aft')) {
+        exclude group: 'org.checkerframework', module: 'checker'
+    }
     implementation project(':lib_utils_log')
     implementation project(':lib_utils_misc')
     implementation (group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1') {

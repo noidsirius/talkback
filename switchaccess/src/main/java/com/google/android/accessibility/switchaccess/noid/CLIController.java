@@ -6,14 +6,16 @@ import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
+import com.android.switchaccess.SwitchAccessService;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 import java.util.Scanner;
-
-import com.android.switchaccess.SwitchAccessService;
 
 public class CLIController {
     public static boolean isPolling = false;
@@ -44,6 +46,13 @@ public class CLIController {
                 if (nextCommand.equals("log")) {
                     Log.i(AccessibilityUtil.TAG, "CMD: log");
                     logCurrentState();
+                    clearCommandFile();
+                } else if (nextCommand.equals("a11y_scan")) {
+                    Log.i(AccessibilityUtil.TAG, "CMD: a11y_scan");
+                    AccessibilityNodeInfo rootNode = SwitchAccessService.getInstance().getRootInActiveWindow();
+                    List<AccessibilityHierarchyCheckResult> errors = AccessibilityUtil.getA11yIssues(rootNode);
+                    for(AccessibilityHierarchyCheckResult error : errors)
+                        Log.i(AccessibilityUtil.TAG, " A11y-Error " + error.toString());
                     clearCommandFile();
                 } else if (nextCommand.equals("log_widgets")) {
                     Log.i(AccessibilityUtil.TAG, "CMD: log_widgets");
