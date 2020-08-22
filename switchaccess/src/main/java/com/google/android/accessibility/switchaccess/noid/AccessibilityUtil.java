@@ -195,8 +195,17 @@ public class AccessibilityUtil {
         List<AccessibilityNodeInfo> result = new ArrayList<>();
         for(AccessibilityNodeInfo node : getAllA11yNodeInfo(false)) {
             WidgetInfo currentNodeInfo = WidgetInfo.create(node);
-            if (target.isSimilar(currentNodeInfo))
+            if (target.isSimilarWithoutContext(currentNodeInfo))
                 result.add(node);
+        }
+        if(result.size() > 0){
+            List<AccessibilityNodeInfo> filteredResult = new ArrayList<>();
+            for(AccessibilityNodeInfo node : result){
+                WidgetInfo currentNodeInfo = WidgetInfo.create(node);
+                if(target.isSimilarContext(currentNodeInfo))
+                    filteredResult.add(node);
+            }
+            result = filteredResult;
         }
         return result;
     }

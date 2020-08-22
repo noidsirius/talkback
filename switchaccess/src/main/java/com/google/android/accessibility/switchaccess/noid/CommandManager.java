@@ -10,6 +10,7 @@ import org.json.simple.parser.ParseException;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,31 +47,7 @@ public class CommandManager {
             Log.i(AccessibilityUtil.TAG, "----------The test case is completed!---------");
             if(endTime == -1)
                 endTime = System.currentTimeMillis();
-            long totalTime = endTime -  startTime;
-            long totalEvents = 0;
-            long meanTime = 0;
-            int meanEventCount = 0;
-            int completeCount = 0;
-            int unlocatedCount = 0;
-            int unreachableCount = 0;
-            for(int i=0; i<commandList.size(); i++) {
-                Command cmd = commandList.get(i);
-                meanTime += cmd.getTime();
-                meanEventCount += cmd.getNumberOfActions();
-                totalEvents += cmd.getNumberOfActions();
-                if(cmd.getExecutionState() == Command.COMPLETED)
-                    completeCount++;
-                else if(cmd.getExecutionState() == Command.COMPLETED_BY_REGULAR)
-                    unreachableCount++;
-                else if(cmd.getExecutionState() == Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT)
-                    unlocatedCount++;
-                Log.i(AccessibilityUtil.TAG, String.format("   CMD: %d $ State: %s $ #Events: %d $ Time: %d",
-                        i + 1, Command.getActionStr(cmd.getExecutionState()), cmd.getNumberOfActions(), cmd.getTime()));
-            }
-            meanTime /= commandList.size();
-            meanEventCount /= commandList.size();
-            Log.i(AccessibilityUtil.TAG, String.format("Total Time: %d $ Mean Time: %d $ Total Events: %d $ Mean Event: %d", totalTime, meanTime, totalEvents, meanEventCount));
-            Log.i(AccessibilityUtil.TAG, String.format("Completed Steps: %d $ Unlocatable Steps: %d $ Unreachable Steps: %d", completeCount, unlocatedCount, unreachableCount));
+            writeResult();
             return false;
         }
         Log.i(AccessibilityUtil.TAG, "Executing command " + (lastCommandIndex+1) + " Masks " + WidgetInfo.maskedAttributes);
@@ -97,6 +74,16 @@ public class CommandManager {
         commandList.clear();
         startTime = -1;
         endTime = -1;
+        {
+            String resultFileName = "test_result.txt";
+            // TODO: check context.getFilesDir().getPath();
+            String resultDir = com.android.switchaccess.SwitchAccessService.getInstance().getBaseContext().getFilesDir().getPath();
+//        String dir = "/data/local/tmp/alaki";
+//            String dir = context.getFilesDir().getPath();
+            Log.i(AccessibilityUtil.TAG, "Path: " + resultDir);
+            File resultFile = new File(resultDir, resultFileName);
+            resultFile.delete();
+        }
         String fileName = "test_guideline.json";
         // TODO: check context.getFilesDir().getPath();
         String dir = "/data/local/tmp/";
@@ -145,6 +132,61 @@ public class CommandManager {
             e.printStackTrace();
         }
         lastCommandIndex = 0;
+    }
+
+    public static void writeResult(){
+        String fileName = "test_result.txt";
+        // TODO: check context.getFilesDir().getPath();
+        String dir = com.android.switchaccess.SwitchAccessService.getInstance().getBaseContext().getFilesDir().getPath();
+//        String dir = "/data/local/tmp/alaki";
+//            String dir = context.getFilesDir().getPath();
+        Log.i(AccessibilityUtil.TAG, "Path: " + dir);
+        File file = new File(dir, fileName);
+        FileWriter myWriter = null;
+        try {
+            myWriter = new FileWriter(file);
+            long totalTime = endTime -  startTime;
+            long totalEvents = 0;
+            int completeCount = 0;
+            int unlocatedCount = 0;
+            int unreachableCount = 0;
+            int firstProbelmaticCommand = -1;
+            int failedCount = 0;
+            for(int i=0; i<commandList.size(); i++) {
+                Command cmd = commandList.get(i);
+                totalEvents += cmd.getNumberOfActions();
+                if(cmd.getExecutionState() != Command.COMPLETED && firstProbelmaticCommand < 0)
+                    firstProbelmaticCommand = i+1;
+                if(cmd.getExecutionState() == Command.COMPLETED)
+                    completeCount++;
+                else if(cmd.getExecutionState() == Command.COMPLETED_BY_REGULAR)
+                    unreachableCount++;
+                else if(cmd.getExecutionState() == Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT)
+                    unlocatedCount++;
+                else if(cmd.getExecutionState() == Command.FAILED)
+                    failedCount++;
+                String message = String.format("   CMD: %d $ State: %s $ #Events: %d $ Time: %d",
+                        i + 1, Command.getActionStr(cmd.getExecutionState()), cmd.getNumberOfActions(), cmd.getTime());
+                Log.i(AccessibilityUtil.TAG+"_RESULT", message);
+                myWriter.write(message+'\n');
+            }
+            String message = String.format("Result: %s $ Steps: %d $ Completed: %d $ Failed: %d $ Unlocatable: %d $ Unreachable: %d $ FirstProblem: %d $ TotalEvents: %d $ TotalTime: %d",
+                    completeCount == commandList.size(),
+                    commandList.size(),
+                    completeCount,
+                    failedCount,
+                    unlocatedCount,
+                    unreachableCount,
+                    firstProbelmaticCommand,
+                    totalEvents,
+                    totalTime);
+            Log.i(AccessibilityUtil.TAG+"_RESULT", message);
+            myWriter.write(message+'\n');
+            myWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.i(AccessibilityUtil.TAG+"_RESULT", "Error: " + e.getMessage());
+        }
     }
 
     public static void setLastCommandIndex(int lastCommandIndex) {

@@ -3,6 +3,7 @@ package com.google.android.accessibility.switchaccess.noid;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -63,11 +64,7 @@ public class TalkBackCommandExecutor {
                     command.numberOfAttempts++;
                     if(command.numberOfAttempts >= Command.MAX_ATTEMPT) {
                         Log.i(AccessibilityUtil.TAG, "Couldn't locate the widget, Execute the command using regular test executor");
-                        List<String> maskedAttributes = new ArrayList<>(WidgetInfo.maskedAttributes);
-                        WidgetInfo.maskedAttributes.clear();
-                        RegularCommandExecutor.executeCommand(command);
-                        WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
-                        if(command.getExecutionState() == Command.COMPLETED)
+                        if(RegularCommandExecutor.executeInTalkBack(command) == Command.COMPLETED)
                             command.setExecutionState(Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT);
                         else
                             command.setExecutionState(Command.FAILED);
@@ -82,11 +79,7 @@ public class TalkBackCommandExecutor {
                     command.numberOfAttempts++;
                     if(command.numberOfAttempts >= Command.MAX_ATTEMPT) {
                         Log.i(AccessibilityUtil.TAG, "Couldn't locate the widget, Execute the command using regular test executor");
-                        List<String> maskedAttributes = new ArrayList<>(WidgetInfo.maskedAttributes);
-                        WidgetInfo.maskedAttributes.clear();
-                        RegularCommandExecutor.executeCommand(command);
-                        WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
-                        if(command.getExecutionState() == Command.COMPLETED)
+                        if(RegularCommandExecutor.executeInTalkBack(command) == Command.COMPLETED)
                             command.setExecutionState(Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT);
                         else
                             command.setExecutionState(Command.FAILED);
@@ -98,26 +91,58 @@ public class TalkBackCommandExecutor {
                     if(focusedNode != null) {
                         int trackAction = command.trackAction(focusedNode);
                         Log.i(AccessibilityUtil.TAG, String.format("The following widget has been visited %d times: %s", trackAction, WidgetInfo.create(focusedNode)));
-                        if(trackAction > Command.MAX_VISITED_WIDGET){
+                        if(trackAction == Command.MAX_VISITED_WIDGET){
+                            Log.i(AccessibilityUtil.TAG, "Focus on next leaf element");
+                            AccessibilityNodeInfo nextLeafNode = null;
+                            List<AccessibilityNodeInfo> allNodes = AccessibilityUtil.getAllA11yNodeInfo(false);
+                            for(int i=0; i<allNodes.size(); i++){
+                                if(allNodes.get(i).equals(focusedNode)){
+                                    Log.i(AccessibilityUtil.TAG, "Found it");
+                                    for(int j=i+1; j<allNodes.size(); j++){
+                                        String cls = String.valueOf(allNodes.get(j).getClassName());
+                                        if(cls.endsWith("TextView") || cls.endsWith("ImageView") || cls.endsWith("ImageButton")) {
+                                            nextLeafNode = allNodes.get(j);
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            if(nextLeafNode != null){
+                                Log.i(AccessibilityUtil.TAG, "Next Leaf Node: " + nextLeafNode);
+                                AccessibilityUtil autil = new AccessibilityUtil(com.android.switchaccess.SwitchAccessService.getInstance());
+                                Rect box = new Rect();
+                                nextLeafNode.getBoundsInScreen(box);
+                                int x = (box.left + box.right) / 2;
+                                int y = (box.top + box.bottom) / 2;
+                                if(x >= 0 && y >= 0) {
+                                    autil.performTap(x, y);
+                                    return command.getExecutionState();
+                                }
+                            }
+                        }
+                        else
+                         if(trackAction > Command.MAX_VISITED_WIDGET){
                             Log.i(AccessibilityUtil.TAG, "Execute the command using regular test executor");
-                            RegularCommandExecutor.executeCommand(command);
-                            if(command.getExecutionState() == Command.COMPLETED)
+                            if(RegularCommandExecutor.executeInTalkBack(command) == Command.COMPLETED)
                                 command.setExecutionState(Command.COMPLETED_BY_REGULAR);
                             return command.getExecutionState();
                         }
-                        AccessibilityNodeInfo it = node;
-                        boolean isSimilar = false;
-                        AccessibilityNodeInfo firstReachableNode = null;
-                        while(it != null){
+                        AccessibilityNodeInfo firstReachableNode = node;
+                        boolean isSimilar = firstReachableNode != null && firstReachableNode.equals(focusedNode);
+                        if(!isSimilar) {
+                            AccessibilityNodeInfo it = node;
+                            while (it != null) {
 
-                            if(it.isClickable()){
-                                firstReachableNode = it;
-                                break;
+                                if (it.isClickable()) {
+                                    firstReachableNode = it;
+                                    break;
+                                }
+                                it = it.getParent();
                             }
-                            it = it.getParent();
+                            Log.i(AccessibilityUtil.TAG, "-- FIRST REACHABLE NODE IS " + firstReachableNode);
+                            isSimilar = firstReachableNode != null && firstReachableNode.equals(focusedNode);
                         }
-                        Log.i(AccessibilityUtil.TAG, "-- FIRST REACHABLE NODE IS " + firstReachableNode);
-                        isSimilar = firstReachableNode != null && firstReachableNode.equals(focusedNode);
                         if (isSimilar) {
                             if (command.getAction().equals(Command.CMD_ASSERT)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do ASSERT");

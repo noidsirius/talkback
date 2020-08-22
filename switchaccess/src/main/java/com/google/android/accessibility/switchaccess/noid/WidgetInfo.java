@@ -120,6 +120,9 @@ public class WidgetInfo {
         return contentSimilar && contextSimilar;
     }
 
+    public boolean isSimilarWithoutContext(WidgetInfo other){
+        return isSimilarWithoutContext(other, maskedAttributes);
+    }
     private boolean isSimilarWithoutContext(WidgetInfo other, List<String> myMaskedAttributes){
         boolean isSimilar = true;
         for(String attrName : attributeNames){
@@ -134,7 +137,7 @@ public class WidgetInfo {
         return isSimilar;
     }
 
-    private boolean isSimilarContext(WidgetInfo other){
+    public boolean isSimilarContext(WidgetInfo other){
         if(maskedAttributes.contains("context"))
             return true;
         boolean result = true;

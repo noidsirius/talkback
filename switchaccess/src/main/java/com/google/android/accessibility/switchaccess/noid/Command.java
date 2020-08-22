@@ -66,7 +66,7 @@ public class Command {
         return numberOfActions;
     }
 
-    public final static int MAX_ATTEMPT = 3;
+    public final static int MAX_ATTEMPT = 4;
     public final static int MAX_VISITED_WIDGET = 3;
 
     public Command(WidgetInfo widgetInfo, String action) {
@@ -98,7 +98,8 @@ public class Command {
         }
         else if(executionState == COMPLETED
                 || executionState == COMPLETED_BY_REGULAR_UNABLE_TO_DETECT
-                || executionState == COMPLETED_BY_REGULAR){
+                || executionState == COMPLETED_BY_REGULAR
+                || executionState == FAILED){
             endTime = System.currentTimeMillis();
         }
     }

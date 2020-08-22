@@ -1,11 +1,14 @@
 package com.google.android.accessibility.switchaccess.noid;
 
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.accessibility.AccessibilityNodeInfo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RegularCommandExecutor{
+    public static boolean clickPhysical = true;
     public static int executeCommand(Command command){
         Log.i(AccessibilityUtil.TAG, String.format("Regular Command state: %s, action: %s, actionExtra: %s, target: %s.",
                 command.getExecutionState(),
@@ -43,7 +46,18 @@ public class RegularCommandExecutor{
                         command.setExecutionState(Command.COMPLETED);
                     } else if (command.getAction().equals(Command.CMD_CLICK)) {
                         Log.i(AccessibilityUtil.TAG, "--- Do CLICK " + node);
-                        boolean clickResult = node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        boolean clickResult = false;
+                        if(clickPhysical) {
+                            AccessibilityUtil autil = new AccessibilityUtil(com.android.switchaccess.SwitchAccessService.getInstance());
+                            Rect box = new Rect();
+                            node.getBoundsInScreen(box);
+                            int x = (box.left + box.right) / 2;
+                            int y = (box.top + box.bottom) / 2;
+                            clickResult = autil.performTap(x, y);
+                        }
+                        else {
+                            clickResult = node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        }
                         Log.i(AccessibilityUtil.TAG, "--- Result " + clickResult);
                         if(!clickResult) {
                             AccessibilityNodeInfo clickableNode = node;
@@ -79,5 +93,16 @@ public class RegularCommandExecutor{
                 Log.i(AccessibilityUtil.TAG, "What I'm doing here?");
         }
         return command.getExecutionState();
+    }
+
+    public static int executeInTalkBack(Command cmd){
+        List<String> maskedAttributes = new ArrayList<>(WidgetInfo.maskedAttributes);
+        WidgetInfo.maskedAttributes.clear();
+        boolean preClickMode = RegularCommandExecutor.clickPhysical;
+        RegularCommandExecutor.clickPhysical = false;
+        RegularCommandExecutor.executeCommand(cmd);
+        RegularCommandExecutor.clickPhysical = preClickMode;
+        WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
+        return cmd.getExecutionState();
     }
 }
