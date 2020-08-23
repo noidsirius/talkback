@@ -16,11 +16,13 @@ package com.google.android.apps.common.testing.accessibility.framework.checks;
 
 import static java.lang.Boolean.TRUE;
 
+import androidx.annotation.Nullable;
+import android.webkit.WebView;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheck.Category;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult.AccessibilityCheckResultType;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheck;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
-import com.google.android.apps.common.testing.accessibility.framework.Parameters;
+import com.google.android.apps.common.testing.accessibility.framework.Metadata;
 import com.google.android.apps.common.testing.accessibility.framework.ResultMetadata;
 import com.google.android.apps.common.testing.accessibility.framework.ViewHierarchyElementUtils;
 import com.google.android.apps.common.testing.accessibility.framework.replacements.TextUtils;
@@ -30,7 +32,6 @@ import com.google.android.apps.common.testing.accessibility.framework.uielement.
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Checks that items that require speakable text have some. Does not check if the text makes sense.
@@ -62,9 +63,9 @@ public class SpeakableTextPresentCheck extends AccessibilityHierarchyCheck {
   public List<AccessibilityHierarchyCheckResult> runCheckOnHierarchy(
       AccessibilityHierarchy hierarchy,
       @Nullable ViewHierarchyElement fromRoot,
-      @Nullable Parameters parameters) {
+      @Nullable Metadata metadata) {
     List<AccessibilityHierarchyCheckResult> results = new ArrayList<>();
-    List<? extends ViewHierarchyElement> viewsToEval = getElementsToEvaluate(fromRoot, hierarchy);
+    List<ViewHierarchyElement> viewsToEval = getElementsToEvaluate(fromRoot, hierarchy);
     for (ViewHierarchyElement element : viewsToEval) {
       if (!TRUE.equals(element.isVisibleToUser())) {
         results.add(new AccessibilityHierarchyCheckResult(
@@ -86,8 +87,7 @@ public class SpeakableTextPresentCheck extends AccessibilityHierarchyCheck {
         continue;
       }
 
-      if (element.checkInstanceOf(ViewHierarchyElementUtils.WEB_VIEW_CLASS_NAME)
-          && element.getChildViewCount() == 0) {
+      if (TRUE.equals(element.checkInstanceOf(WebView.class)) && element.getChildViewCount() == 0) {
         results.add(new AccessibilityHierarchyCheckResult(
             this.getClass(),
             AccessibilityCheckResultType.NOT_RUN,

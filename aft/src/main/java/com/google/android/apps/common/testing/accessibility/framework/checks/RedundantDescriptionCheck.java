@@ -16,12 +16,13 @@ package com.google.android.apps.common.testing.accessibility.framework.checks;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import androidx.annotation.Nullable;
+import android.widget.Button;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheck.Category;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult.AccessibilityCheckResultType;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheck;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
-import com.google.android.apps.common.testing.accessibility.framework.HashMapResultMetadata;
-import com.google.android.apps.common.testing.accessibility.framework.Parameters;
+import com.google.android.apps.common.testing.accessibility.framework.Metadata;
 import com.google.android.apps.common.testing.accessibility.framework.ResultMetadata;
 import com.google.android.apps.common.testing.accessibility.framework.replacements.TextUtils;
 import com.google.android.apps.common.testing.accessibility.framework.strings.StringManager;
@@ -29,50 +30,35 @@ import com.google.android.apps.common.testing.accessibility.framework.uielement.
 import com.google.android.apps.common.testing.accessibility.framework.uielement.DeviceState;
 import com.google.android.apps.common.testing.accessibility.framework.uielement.ViewHierarchyElement;
 import com.google.common.base.Ascii;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Checks to ensure that speakable text does not contain redundant information about the view's
  * type. Accessibility services are aware of the view's type and can use that information as needed
- * (ex: Screen readers may append "button" to the speakable text of a {@link
- * android.widged.Button}).
+ * (ex: Screen readers may append "button" to the speakable text of a {@link Button}).
  */
 public class RedundantDescriptionCheck extends AccessibilityHierarchyCheck {
 
-  /** [Legacy] Result when the locale is not English. */
+  /** Result when the locale is not English. */
   public static final int RESULT_ID_ENGLISH_LOCALE_ONLY = 1;
   /** Result when the view is not {@code importantForAccessibility}. */
   public static final int RESULT_ID_NOT_IMPORTANT_FOR_ACCESSIBILITY = 2;
   /** Result when the view does not have a {@code contentDescription}*/
   public static final int RESULT_ID_NO_CONTENT_DESC = 3;
-  /** [Legacy] Result when the view's {@code contentDescription} ends with the view's type. */
+  /** Result when the view's {@code contentDescription} ends with the view's type. */
   public static final int RESULT_ID_CONTENT_DESC_ENDS_WITH_VIEW_TYPE = 4;
-  /** Result when the view's {@code contentDescription} contains the view's type. */
-  public static final int RESULT_ID_CONTENT_DESC_CONTAINS_REDUNDANT_WORD = 5;
-  /** Result when thew view is not visible. */
-  public static final int RESULT_ID_NOT_VISIBLE = 6;
 
   /**
-   * Result metadata key for a view's content description as a {@code String}. Populated in results
-   * with {@link #RESULT_ID_CONTENT_DESC_CONTAINS_REDUNDANT_WORD} or {@link
-   * #RESULT_ID_CONTENT_DESC_ENDS_WITH_VIEW_TYPE}.
+   * Result metadata key for a view's content description as a {@link String}. Populated with
+   * results of ID {@code RESULT_ID_CONTENT_DESC_ENDS_WITH_VIEW_TYPE}
    */
   public static final String KEY_CONTENT_DESCRIPTION = "KEY_CONTENT_DESCRIPTION";
 
-  /**
-   * Result metadata key for a possibly redundant word in the view's content description, as a
-   * {@code String}. Populated in results with {@link
-   * #RESULT_ID_CONTENT_DESC_CONTAINS_REDUNDANT_WORD}.
-   */
-  public static final String KEY_REDUNDANT_WORD = "KEY_REDUNDANT_WORD";
-
-  /** Keys of String resources. */
-  private static final ImmutableList<String> redundantWordKeys =
-      ImmutableList.of("button_item_type");
+  private static final List<CharSequence> redundantWords =
+      Lists.<CharSequence>newArrayList("button");
 
   @Override
   protected String getHelpTopic() {
@@ -88,22 +74,20 @@ public class RedundantDescriptionCheck extends AccessibilityHierarchyCheck {
   public List<AccessibilityHierarchyCheckResult> runCheckOnHierarchy(
       AccessibilityHierarchy hierarchy,
       @Nullable ViewHierarchyElement fromRoot,
-      @Nullable Parameters parameters) {
+      @Nullable Metadata metadata) {
     List<AccessibilityHierarchyCheckResult> results = new ArrayList<>();
-    Locale recordedLocale = getRecordedLocale(hierarchy);
 
-    List<? extends ViewHierarchyElement> viewsToEval = getElementsToEvaluate(fromRoot, hierarchy);
+    if (!isEnglish(hierarchy)) {
+      results.add(new AccessibilityHierarchyCheckResult(
+          this.getClass(), AccessibilityCheckResultType.NOT_RUN,
+          null,
+          RESULT_ID_ENGLISH_LOCALE_ONLY,
+          null));
+      return results;
+    }
+
+    List<ViewHierarchyElement> viewsToEval = getElementsToEvaluate(fromRoot, hierarchy);
     for (ViewHierarchyElement view : viewsToEval) {
-      if (!Boolean.TRUE.equals(view.isVisibleToUser())) {
-        results.add(
-            new AccessibilityHierarchyCheckResult(
-                this.getClass(),
-                AccessibilityCheckResultType.NOT_RUN,
-                view,
-                RESULT_ID_NOT_VISIBLE,
-                null));
-        continue;
-      }
       if (!view.isImportantForAccessibility()) {
         results.add(new AccessibilityHierarchyCheckResult(
             this.getClass(),
@@ -124,18 +108,16 @@ public class RedundantDescriptionCheck extends AccessibilityHierarchyCheck {
             null));
         continue;
       }
-      for (String redundantWordKey : redundantWordKeys) {
-        CharSequence redundantWord = StringManager.getString(recordedLocale, redundantWordKey);
-        if (containsIgnoreCase(contentDescription, redundantWord)) {
-          ResultMetadata resultMetadata = new HashMapResultMetadata();
+      for (CharSequence redundantWord : redundantWords) {
+        if (Ascii.toLowerCase(contentDescription.toString()).contains(redundantWord)) {
+          Metadata resultMetadata = new Metadata();
           resultMetadata.putString(KEY_CONTENT_DESCRIPTION, contentDescription.toString());
-          resultMetadata.putString(KEY_REDUNDANT_WORD, redundantWord.toString());
           results.add(
               new AccessibilityHierarchyCheckResult(
                   this.getClass(),
                   AccessibilityCheckResultType.WARNING,
                   view,
-                  RESULT_ID_CONTENT_DESC_CONTAINS_REDUNDANT_WORD,
+                  RESULT_ID_CONTENT_DESC_ENDS_WITH_VIEW_TYPE,
                   resultMetadata));
         }
       }
@@ -146,13 +128,12 @@ public class RedundantDescriptionCheck extends AccessibilityHierarchyCheck {
   @Override
   public String getMessageForResult(Locale locale, AccessibilityHierarchyCheckResult result) {
     if (result.getResultId() == RESULT_ID_CONTENT_DESC_ENDS_WITH_VIEW_TYPE) {
+      ViewHierarchyElement culprit = result.getElement();
       ResultMetadata metadata = result.getMetadata();
-      if (((metadata == null) || !metadata.containsKey(KEY_CONTENT_DESCRIPTION))
-          && (result.getElement() != null)) {
+      if ((culprit != null)
+          && ((metadata == null) || !metadata.containsKey(KEY_CONTENT_DESCRIPTION))) {
         // For legacy results, remap hierarchy element content description to metadata
-        ViewHierarchyElement culprit = result.getElement();
-        ResultMetadata updatedMetadata =
-            (metadata != null) ? metadata.clone() : new HashMapResultMetadata();
+        ResultMetadata updatedMetadata = (metadata != null) ? metadata.clone() : new Metadata();
         updatedMetadata.putString(
             KEY_CONTENT_DESCRIPTION, checkNotNull(culprit.getContentDescription()).toString());
         AccessibilityHierarchyCheckResult updatedResult =
@@ -177,16 +158,10 @@ public class RedundantDescriptionCheck extends AccessibilityHierarchyCheck {
       return generated;
     }
 
-    // Metadata will have been set for these result IDs.
-    checkNotNull(metadata);
     switch (resultId) {
-      case RESULT_ID_CONTENT_DESC_CONTAINS_REDUNDANT_WORD:
-        return String.format(
-            locale,
-            StringManager.getString(locale, "result_message_content_desc_contains_redundant_word"),
-            metadata.getString(KEY_CONTENT_DESCRIPTION),
-            metadata.getString(KEY_REDUNDANT_WORD));
       case RESULT_ID_CONTENT_DESC_ENDS_WITH_VIEW_TYPE:
+        // Metadata will have been set for this result ID
+        checkNotNull(metadata);
         return String.format(
             locale,
             StringManager.getString(locale, "result_message_content_desc_ends_with_view_type"),
@@ -205,10 +180,9 @@ public class RedundantDescriptionCheck extends AccessibilityHierarchyCheck {
     }
 
     switch (resultId) {
-      case RESULT_ID_CONTENT_DESC_CONTAINS_REDUNDANT_WORD:
       case RESULT_ID_CONTENT_DESC_ENDS_WITH_VIEW_TYPE:
         return StringManager.getString(
-            locale, "result_message_brief_content_desc_contains_redundant_word");
+            locale, "result_message_brief_content_desc_ends_with_view_type");
       default:
         throw new IllegalStateException("Unsupported result id");
     }
@@ -219,13 +193,12 @@ public class RedundantDescriptionCheck extends AccessibilityHierarchyCheck {
     return StringManager.getString(locale, "check_title_redundant_description");
   }
 
-  private static boolean containsIgnoreCase(CharSequence sequence, CharSequence subSequence) {
-    return Ascii.toLowerCase(sequence.toString()).contains(Ascii.toLowerCase(subSequence));
-  }
-
-  /** Indicates the locale recorded in the {@link DeviceState}. */
-  private static Locale getRecordedLocale(AccessibilityHierarchy hierarchy) {
-    return hierarchy.getDeviceState().getLocale();
+  /**
+   * Indicates whether the locale recorded in the {@link DeviceState} was English.
+   */
+  private static boolean isEnglish(AccessibilityHierarchy hierarchy) {
+    return hierarchy.getDeviceState().getLocale().getLanguage().equals(
+        Locale.ENGLISH.getLanguage());
   }
 
   private static @Nullable String generateMessageForResultId(Locale locale, int resultId) {

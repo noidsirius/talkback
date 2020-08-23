@@ -205,7 +205,7 @@ public class SwitchAccessService extends AccessibilityService
   @Override
   public void onAccessibilityEvent(AccessibilityEvent event) {
     CLIController.onAccessibilityEvent(event);
-    String x = "4423";
+    String x = "4455243";
     Trace.beginSection("SwitchAccessService#onAccessibilityEvent");
     // Only process the AccessibilityEvents when the screen is on.
     if (screenMonitor != null && screenMonitor.isScreenOn()) {

@@ -12,11 +12,17 @@ import com.google.android.accessibility.switchaccess.treenodes.TreeScanSystemPro
 import com.google.android.accessibility.switchaccess.treenodes.TreeScanSelectionNode;
 
 import com.google.android.accessibility.switchaccess.SwitchAccessNodeCompat;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckPreset;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheck;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
+import com.google.android.apps.common.testing.accessibility.framework.checks.TraversalOrderCheck;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SwitchAccessCommandExecutor {
     private static SwitchAccessWidgetInfo focusedNode;
@@ -45,6 +51,11 @@ public class SwitchAccessCommandExecutor {
                 result.add(node);
         }
         return result;
+    }
+
+    public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode){
+        Set<AccessibilityHierarchyCheck> checks = Collections.singleton(AccessibilityCheckPreset.getHierarchyCheckForClass(TraversalOrderCheck.class));
+        return AccessibilityUtil.getA11yIssues(rootNode, true, checks);
     }
 
     public static int executeCommand(Command command){
@@ -160,7 +171,7 @@ public class SwitchAccessCommandExecutor {
                                 Log.i(AccessibilityUtil.TAG, "--- Do TYPE AND NEXT");
                                 AccessibilityUtil.performType(focusedNode.getSwitchAccessNodeCompat().unwrap(), command.getActionExtra());
 //                                command.numberOfActions++;
-                                performNext();
+//                                performNext();
                             } else {
                                 Log.i(AccessibilityUtil.TAG, "Command's action is unknown " + command.getAction());
                             }

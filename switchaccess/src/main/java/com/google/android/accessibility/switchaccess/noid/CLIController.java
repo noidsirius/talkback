@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -102,14 +103,17 @@ public class CLIController {
                     if(executor.equals("switch")) {
                         Log.i(AccessibilityUtil.TAG, "CMD: The current executor is set to SwitchAccess");
                         CommandManager.setTestExecutor(SwitchAccessCommandExecutor::executeCommand);
+                        CommandManager.setA11yIssueReporter(SwitchAccessCommandExecutor::getA11yIssues);
                     }
                     else if(executor.equals("regular")) {
                         Log.i(AccessibilityUtil.TAG, "CMD: The current executor is set to SwitchAccess");
                         CommandManager.setTestExecutor(RegularCommandExecutor::executeCommand);
+                        CommandManager.setA11yIssueReporter(RegularCommandExecutor::getA11yIssues);
                     }
                     else if(executor.equals("talk")) {
                         Log.i(AccessibilityUtil.TAG, "CMD: The current executor is set to TalkBack");
                         CommandManager.setTestExecutor(TalkBackCommandExecutor::executeCommand);
+                        CommandManager.setA11yIssueReporter(TalkBackCommandExecutor::getA11yIssues);
                     }
                     else
                         Log.i(AccessibilityUtil.TAG, "CMD: The requested executor is unknown! " + executor);

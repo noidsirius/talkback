@@ -14,11 +14,13 @@
 
 package com.google.android.apps.common.testing.accessibility.framework.replacements;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+import androidx.annotation.Nullable;
 import com.google.android.apps.common.testing.accessibility.framework.uielement.proto.AndroidFrameworkProtos.RectProto;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /** Used as a local immutable replacement for Android's {@link android.graphics.Rect} */
-public final class Rect {
+public class Rect implements Replaceable<android.graphics.Rect>, Parcelable {
 
   public static final Rect EMPTY = new Rect(0, 0, 0, 0);
 
@@ -35,41 +37,59 @@ public final class Rect {
     this.bottom = Math.max(top, bottom);
   }
 
+  public Rect(android.graphics.Rect rect) {
+    this(rect.left, rect.top, rect.right, rect.bottom);
+  }
+
   public Rect(RectProto rectProto) {
     this(rectProto.getLeft(), rectProto.getTop(), rectProto.getRight(), rectProto.getBottom());
   }
 
-  /** See {@link android.graphics.Rect#left} */
+  /**
+   * @see android.graphics.Rect#left
+   */
   public final int getLeft() {
     return left;
   }
 
-  /** See {@link android.graphics.Rect#top} */
+  /**
+   * @see android.graphics.Rect#top
+   */
   public final int getTop() {
     return top;
   }
 
-  /** See {@link android.graphics.Rect#right} */
+  /**
+   * @see android.graphics.Rect#right
+   */
   public final int getRight() {
     return right;
   }
 
-  /** See {@link android.graphics.Rect#bottom} */
+  /**
+   * @see android.graphics.Rect#bottom
+   */
   public final int getBottom() {
     return bottom;
   }
 
-  /** See {@link android.graphics.Rect#width()} */
+  /**
+   * @see android.graphics.Rect#width()
+   */
   public final int getWidth() {
     return right - left;
   }
 
-  /** See {@link android.graphics.Rect#height()} */
+  /**
+   * @see android.graphics.Rect#height()
+   */
   public final int getHeight() {
     return bottom - top;
   }
 
-  /** See {@link android.graphics.Rect#contains(android.graphics.Rect)} */
+  /**
+   * @see android.graphics.Rect#contains(android.graphics.Rect)
+   */
   public boolean contains(Rect r) {
     return !isEmpty()
         && (this.left <= r.left)
@@ -78,9 +98,21 @@ public final class Rect {
         && (this.bottom >= r.bottom);
   }
 
-  /** See {@link android.graphics.Rect#isEmpty()} */
+  /**
+   * @see android.graphics.Rect#isEmpty()
+   */
   public boolean isEmpty() {
     return (left == right) || (top == bottom);
+  }
+
+  @Override
+  public android.graphics.Rect getAndroidInstance() {
+    return new android.graphics.Rect(left, top, right, bottom);
+  }
+
+  @Override
+  public int describeContents() {
+    return 0;
   }
 
   public RectProto toProto() {
@@ -90,6 +122,22 @@ public final class Rect {
     builder.setRight(right);
     builder.setBottom(bottom);
     return builder.build();
+  }
+
+  @Override
+  public void writeToParcel(Parcel out, int flags) {
+    out.writeInt(left);
+    out.writeInt(top);
+    out.writeInt(right);
+    out.writeInt(bottom);
+  }
+
+  private static Rect readFromParcel(Parcel in) {
+    int left = in.readInt();
+    int top = in.readInt();
+    int right = in.readInt();
+    int bottom = in.readInt();
+    return new Rect(left, top, right, bottom);
   }
 
   @Override
@@ -130,7 +178,9 @@ public final class Rect {
     return sb.toString();
   }
 
-  /** See {@link android.graphics.Rect#toShortString()} */
+  /**
+   * @see android.graphics.Rect#toShortString()
+   */
   public String toShortString() {
     StringBuilder sb = new StringBuilder(32);
     sb.append('[');
@@ -145,8 +195,16 @@ public final class Rect {
     return sb.toString();
   }
 
-  /** See {@link android.graphics.Rect#intersects(android.graphics.Rect, android.graphics.Rect)} */
-  public static boolean intersects(Rect a, Rect b) {
-    return (a.top < b.bottom) && (b.top < a.bottom) && (a.left < b.right) && (b.left < a.right);
-  }
+  public static final Parcelable.Creator<Rect> CREATOR =
+      new Parcelable.Creator<Rect>() {
+        @Override
+        public Rect createFromParcel(Parcel in) {
+          return readFromParcel(in);
+        }
+
+        @Override
+        public Rect[] newArray(int size) {
+          return new Rect[size];
+        }
+      };
 }

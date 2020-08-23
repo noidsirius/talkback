@@ -1,7 +1,7 @@
 package com.google.android.apps.common.testing.accessibility.framework.strings;
 
+import android.util.Log;
 import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -11,7 +11,7 @@ import java.util.ResourceBundle;
 public final class StringManager {
 
   private static final String STRINGS_PACKAGE_NAME =
-      "com.google.android.apps.common.testing.accessibility.framework";
+          "com.google.android.apps.common.testing.accessibility.framework";
   private static final String STRINGS_FILE_NAME = "strings";
 
   private StringManager() {
@@ -28,11 +28,12 @@ public final class StringManager {
   }
 
   private static ResourceBundle getResourceBundle(Locale locale) {
-    // ResourceBundle handles necessary caching
-    return ResourceBundle.getBundle(
-      AndroidXMLResourceBundle.Control.getBaseName(STRINGS_PACKAGE_NAME, STRINGS_FILE_NAME),
-      locale,
-      checkNotNull(StringManager.class.getClassLoader()),
-      new AndroidXMLResourceBundle.Control());
+
+    Log.e("BUNDLE",AndroidXMLResourceBundle.Control.getBaseName(STRINGS_PACKAGE_NAME, STRINGS_FILE_NAME));
+    Log.e("LOCALE",locale.toString());
+    Log.e("CLASSLOADER",String.valueOf(StringManager.class.getClassLoader() == null));
+    Log.e("CONTROL",String.valueOf(new AndroidXMLResourceBundle.Control()));
+    ResourceBundle temp = ResourceBundle.getBundle(AndroidXMLResourceBundle.Control.getBaseName(STRINGS_PACKAGE_NAME, STRINGS_FILE_NAME), locale, checkNotNull(StringManager.class.getClassLoader()), new AndroidXMLResourceBundle.Control());
+    return ResourceBundle.getBundle(AndroidXMLResourceBundle.Control.getBaseName(STRINGS_PACKAGE_NAME, STRINGS_FILE_NAME), locale, checkNotNull(StringManager.class.getClassLoader()), new AndroidXMLResourceBundle.Control());
   }
 }

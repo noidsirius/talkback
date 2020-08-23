@@ -16,11 +16,12 @@ package com.google.android.apps.common.testing.accessibility.framework.checks;
 
 import static java.lang.Boolean.TRUE;
 
+import androidx.annotation.Nullable;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheck.Category;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult.AccessibilityCheckResultType;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheck;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
-import com.google.android.apps.common.testing.accessibility.framework.Parameters;
+import com.google.android.apps.common.testing.accessibility.framework.Metadata;
 import com.google.android.apps.common.testing.accessibility.framework.ResultMetadata;
 import com.google.android.apps.common.testing.accessibility.framework.strings.StringManager;
 import com.google.android.apps.common.testing.accessibility.framework.uielement.AccessibilityHierarchy;
@@ -30,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /** Check to detect problems in the developer specified accessibility traversal ordering. */
 public class TraversalOrderCheck extends AccessibilityHierarchyCheck {
@@ -60,9 +60,9 @@ public class TraversalOrderCheck extends AccessibilityHierarchyCheck {
   public List<AccessibilityHierarchyCheckResult> runCheckOnHierarchy(
       AccessibilityHierarchy hierarchy,
       @Nullable ViewHierarchyElement fromRoot,
-      @Nullable Parameters parameters) {
+      @Nullable Metadata metadata) {
     List<AccessibilityHierarchyCheckResult> results = new ArrayList<>();
-    List<? extends ViewHierarchyElement> viewsToEval = getElementsToEvaluate(fromRoot, hierarchy);
+    List<ViewHierarchyElement> viewsToEval = getElementsToEvaluate(fromRoot, hierarchy);
     for (ViewHierarchyElement view : viewsToEval) {
       if (!TRUE.equals(view.isVisibleToUser())) {
         results.add(new AccessibilityHierarchyCheckResult(

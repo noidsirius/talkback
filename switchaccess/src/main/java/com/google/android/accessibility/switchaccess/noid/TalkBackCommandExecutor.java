@@ -12,11 +12,23 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import androidx.annotation.RequiresApi;
 
 import com.android.switchaccess.SwitchAccessService;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckPreset;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheck;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
+import com.google.android.apps.common.testing.accessibility.framework.checks.DuplicateSpeakableTextCheck;
+import com.google.android.apps.common.testing.accessibility.framework.checks.EditableContentDescCheck;
+import com.google.android.apps.common.testing.accessibility.framework.checks.RedundantDescriptionCheck;
+import com.google.android.apps.common.testing.accessibility.framework.checks.SpeakableTextPresentCheck;
+import com.google.android.apps.common.testing.accessibility.framework.checks.TraversalOrderCheck;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class TalkBackCommandExecutor {
     private static AccessibilityNodeInfo focusedNode;
@@ -100,7 +112,7 @@ public class TalkBackCommandExecutor {
                                     Log.i(AccessibilityUtil.TAG, "Found it");
                                     for(int j=i+1; j<allNodes.size(); j++){
                                         String cls = String.valueOf(allNodes.get(j).getClassName());
-                                        if(cls.endsWith("TextView") || cls.endsWith("ImageView") || cls.endsWith("ImageButton")) {
+                                        if(cls.endsWith("TextView") || cls.endsWith("ImageView") || cls.endsWith("ImageButton") || cls.endsWith(".EditText")) {
                                             nextLeafNode = allNodes.get(j);
                                             break;
                                         }
@@ -154,7 +166,7 @@ public class TalkBackCommandExecutor {
                                 Log.i(AccessibilityUtil.TAG, "--- Do TYPE AND NEXT");
                                 AccessibilityUtil.performType(focusedNode, command.getActionExtra());
 //                                command.numberOfActions++;
-                                performNext(null);
+//                                performNext(null);
                             } else {
                                 Log.i(AccessibilityUtil.TAG, "Command's action is unknown " + command.getAction());
                             }
@@ -194,6 +206,17 @@ public class TalkBackCommandExecutor {
         GestureDescription gestureDescription = gestureBuilder.build();
         Log.i(AccessibilityUtil.TAG, "Execute Gesture " + gestureDescription.toString());
         return SwitchAccessService.getInstance().dispatchGesture(gestureDescription, callback, null);
+    }
+
+    public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode){
+        Set<AccessibilityHierarchyCheck> checks = new HashSet<>(Arrays.asList(
+                AccessibilityCheckPreset.getHierarchyCheckForClass(TraversalOrderCheck.class),
+                AccessibilityCheckPreset.getHierarchyCheckForClass(SpeakableTextPresentCheck.class),
+                AccessibilityCheckPreset.getHierarchyCheckForClass(EditableContentDescCheck.class),
+                AccessibilityCheckPreset.getHierarchyCheckForClass(DuplicateSpeakableTextCheck.class),
+                AccessibilityCheckPreset.getHierarchyCheckForClass(RedundantDescriptionCheck.class)
+        ));
+        return AccessibilityUtil.getA11yIssues(rootNode, true, checks);
     }
 
 

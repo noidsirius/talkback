@@ -1,6 +1,7 @@
 package com.google.android.accessibility.switchaccess.noid;
 
 import android.util.Log;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 
 import org.json.simple.JSONArray;
@@ -15,6 +16,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.android.switchaccess.SwitchAccessService;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
+
 public class CommandManager {
     public static int lastCommandIndex = -1;
     public static List<Command> commandList = new ArrayList<>();
@@ -25,11 +29,20 @@ public class CommandManager {
         int executeCommand(Command cmd);
     }
 
+    public interface A11yIssueReporter{
+        List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode);
+    }
+
     public static void setTestExecutor(TestExecutor testExecutor) {
         CommandManager.testExecutor = testExecutor;
     }
 
+    public static void setA11yIssueReporter(A11yIssueReporter a11yIssueReporter) {
+        CommandManager.a11yIssueReporter = a11yIssueReporter;
+    }
+
     private static TestExecutor testExecutor;
+    private static A11yIssueReporter a11yIssueReporter;
 
     public static boolean manageCommands(){
         return manageCommands(true);
@@ -56,6 +69,7 @@ public class CommandManager {
             currentCommand.setExecutionState(Command.NOT_STARTED);
         if(currentCommand.getExecutionState() == Command.FAILED)
             currentCommand.setExecutionState(Command.NOT_STARTED);
+        currentCommand.setReportedAccessibilityIssues(reportA11yIssues());
         int result = executeCommand(currentCommand);
         if(result == Command.COMPLETED
                 || result == Command.COMPLETED_BY_REGULAR
@@ -152,6 +166,7 @@ public class CommandManager {
             int unreachableCount = 0;
             int firstProbelmaticCommand = -1;
             int failedCount = 0;
+            int reportedA11yIssues = 0;
             for(int i=0; i<commandList.size(); i++) {
                 Command cmd = commandList.get(i);
                 totalEvents += cmd.getNumberOfActions();
@@ -165,12 +180,16 @@ public class CommandManager {
                     unlocatedCount++;
                 else if(cmd.getExecutionState() == Command.FAILED)
                     failedCount++;
-                String message = String.format("   CMD: %d $ State: %s $ #Events: %d $ Time: %d",
-                        i + 1, Command.getActionStr(cmd.getExecutionState()), cmd.getNumberOfActions(), cmd.getTime());
+                reportedA11yIssues += cmd.getReportedAccessibilityIssues();
+                String message = String.format("   CMD: %d $ State: %s $ #Events: %d $ Time: %d $ A11yIssueCount: %d",
+                        i + 1, Command.getActionStr(cmd.getExecutionState()),
+                        cmd.getNumberOfActions(),
+                        cmd.getTime(),
+                        cmd.getReportedAccessibilityIssues());
                 Log.i(AccessibilityUtil.TAG+"_RESULT", message);
                 myWriter.write(message+'\n');
             }
-            String message = String.format("Result: %s $ Steps: %d $ Completed: %d $ Failed: %d $ Unlocatable: %d $ Unreachable: %d $ FirstProblem: %d $ TotalEvents: %d $ TotalTime: %d",
+            String message = String.format("Result: %s $ Steps: %d $ Completed: %d $ Failed: %d $ Unlocatable: %d $ Unreachable: %d $ FirstProblem: %d $ ReportedA11y: %d $ TotalEvents: %d $ TotalTime: %d",
                     completeCount == commandList.size(),
                     commandList.size(),
                     completeCount,
@@ -178,6 +197,7 @@ public class CommandManager {
                     unlocatedCount,
                     unreachableCount,
                     firstProbelmaticCommand,
+                    reportedA11yIssues,
                     totalEvents,
                     totalTime);
             Log.i(AccessibilityUtil.TAG+"_RESULT", message);
@@ -198,5 +218,13 @@ public class CommandManager {
         if(testExecutor == null)
             return RegularCommandExecutor.executeCommand(command);
         return testExecutor.executeCommand(command);
+    }
+
+    public static int reportA11yIssues(){
+        AccessibilityNodeInfo root = SwitchAccessService.getInstance().getRootInActiveWindow();
+        if(a11yIssueReporter == null){
+            return AccessibilityUtil.getA11yIssues(root).size();
+        }
+        return a11yIssueReporter.getA11yIssues(root).size();
     }
 }

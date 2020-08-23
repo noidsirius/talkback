@@ -17,12 +17,13 @@ import com.google.android.apps.common.testing.accessibility.framework.Accessibil
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheck;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
 import com.google.android.apps.common.testing.accessibility.framework.checks.SpeakableTextPresentCheck;
-import com.google.android.apps.common.testing.accessibility.framework.uielement.AccessibilityHierarchyAndroid;
+import com.google.android.apps.common.testing.accessibility.framework.uielement.AccessibilityHierarchy;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -168,13 +169,23 @@ public class AccessibilityUtil {
         return result;
     }
 
+    public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode){
+        return getA11yIssues(rootNode, true);
+    }
+
     public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode, boolean justError){
-        Context context = com.android.switchaccess.SwitchAccessService.getInstance().getApplicationContext();
         Set<AccessibilityHierarchyCheck> checks =
                 AccessibilityCheckPreset.getAccessibilityHierarchyChecksForPreset(
                         AccessibilityCheckPreset.LATEST);
+        return getA11yIssues(rootNode, justError, checks);
+    }
+
+    public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode, boolean justError, Set<AccessibilityHierarchyCheck> checks){
+        if(rootNode == null)
+            return Collections.emptyList();
+        Context context = com.android.switchaccess.SwitchAccessService.getInstance().getApplicationContext();
         AccessibilityCheckPreset.getHierarchyCheckForClass(SpeakableTextPresentCheck.class);
-        AccessibilityHierarchyAndroid hierarchy = AccessibilityHierarchyAndroid.newBuilder(rootNode, context).build();
+        AccessibilityHierarchy hierarchy = AccessibilityHierarchy.newBuilder(rootNode, context).build();
         List<AccessibilityHierarchyCheckResult> results = new ArrayList<>();
         for (AccessibilityHierarchyCheck check : checks) {
             results.addAll(check.runCheckOnHierarchy(hierarchy));
@@ -185,10 +196,6 @@ public class AccessibilityUtil {
             returnedResult.addAll(AccessibilityCheckResultUtils.getResultsForType(
                     results, AccessibilityCheckResult.AccessibilityCheckResultType.WARNING));
         return returnedResult;
-    }
-
-    public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode){
-        return getA11yIssues(rootNode, true);
     }
 
     public static List<AccessibilityNodeInfo> findNodes(WidgetInfo target){

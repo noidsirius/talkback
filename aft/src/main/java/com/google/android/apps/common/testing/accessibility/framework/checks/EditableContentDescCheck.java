@@ -16,13 +16,15 @@ package com.google.android.apps.common.testing.accessibility.framework.checks;
 
 import static java.lang.Boolean.TRUE;
 
+import androidx.annotation.Nullable;
+import android.widget.EditText;
+import android.widget.TextView;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheck.Category;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult.AccessibilityCheckResultType;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheck;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
-import com.google.android.apps.common.testing.accessibility.framework.Parameters;
+import com.google.android.apps.common.testing.accessibility.framework.Metadata;
 import com.google.android.apps.common.testing.accessibility.framework.ResultMetadata;
-import com.google.android.apps.common.testing.accessibility.framework.ViewHierarchyElementUtils;
 import com.google.android.apps.common.testing.accessibility.framework.replacements.TextUtils;
 import com.google.android.apps.common.testing.accessibility.framework.strings.StringManager;
 import com.google.android.apps.common.testing.accessibility.framework.uielement.AccessibilityHierarchy;
@@ -30,7 +32,6 @@ import com.google.android.apps.common.testing.accessibility.framework.uielement.
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Check to ensure that an editable TextView is not labeled by a contentDescription
@@ -58,9 +59,9 @@ public class EditableContentDescCheck extends AccessibilityHierarchyCheck {
   public List<AccessibilityHierarchyCheckResult> runCheckOnHierarchy(
       AccessibilityHierarchy hierarchy,
       @Nullable ViewHierarchyElement fromRoot,
-      @Nullable Parameters parameters) {
+      @Nullable Metadata metadata) {
     List<AccessibilityHierarchyCheckResult> results = new ArrayList<>();
-    List<? extends ViewHierarchyElement> viewsToEval = getElementsToEvaluate(fromRoot, hierarchy);
+    List<ViewHierarchyElement> viewsToEval = getElementsToEvaluate(fromRoot, hierarchy);
     for (ViewHierarchyElement view : viewsToEval) {
       if (!view.isImportantForAccessibility()) {
         results.add(new AccessibilityHierarchyCheckResult(
@@ -72,8 +73,7 @@ public class EditableContentDescCheck extends AccessibilityHierarchyCheck {
         continue;
       }
 
-      if (TRUE.equals(view.isEditable())
-          || view.checkInstanceOf(ViewHierarchyElementUtils.EDIT_TEXT_CLASS_NAME)) {
+      if (TRUE.equals(view.isEditable()) || TRUE.equals(view.checkInstanceOf(EditText.class))) {
         if (!TextUtils.isEmpty(view.getContentDescription())) {
           results.add(new AccessibilityHierarchyCheckResult(this.getClass(),
               AccessibilityCheckResultType.ERROR,

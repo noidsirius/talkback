@@ -16,30 +16,31 @@
 
 package com.google.android.apps.common.testing.accessibility.framework;
 
+import androidx.annotation.Nullable;
+import android.util.Log;
 import android.view.View;
-import com.google.android.apps.common.testing.accessibility.framework.uielement.AccessibilityHierarchyAndroid;
+import com.google.android.apps.common.testing.accessibility.framework.uielement.AccessibilityHierarchy;
 import com.google.android.apps.common.testing.accessibility.framework.uielement.ViewHierarchyElement;
-import com.google.android.libraries.accessibility.utils.log.LogUtils;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.googlecode.eyesfree.utils.LogUtils;
 import java.util.ArrayList;
 import java.util.List;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import java.util.Locale;
 
 /**
  * Base class to check the accessibility of all {@link View}s in a hierarchy.
  *
  * @deprecated New accessibility checks should use {@link AccessibilityHierarchyCheck} to evaluate
- *     an {@link AccessibilityHierarchyAndroid} rather than a hierarchy of {@link View}s directly.
- *     ATF integrations using {@link AccessibilityViewHierarchyCheck} sublcasses may continue to do
- *     so, but may incur additional overhead during execution, since an {@link
- *     AccessibilityHierarchyAndroid} is captured implicitly with each call to {@link
- *     #runCheckOnViewHierarchy(View, Parameters)}
+ *             an {@link AccessibilityHierarchy} rather than a hierarchy of
+ *             {@link View}s directly.  ATF integrations using
+ *             {@link AccessibilityViewHierarchyCheck} sublcasses may continue to do so, but may
+ *             incur additional overhead during execution, since an {@link AccessibilityHierarchy}
+ *             is captured implicitly with each call to
+ *             {@link #runCheckOnViewHierarchy(View, Metadata)}
  */
 @Deprecated
 public abstract class AccessibilityViewHierarchyCheck extends AccessibilityCheck {
-
-  private static final String TAG = "A11yViewHierarchyCheck";
 
   public AccessibilityViewHierarchyCheck() {
   }
@@ -48,14 +49,17 @@ public abstract class AccessibilityViewHierarchyCheck extends AccessibilityCheck
    * Run the check on the view.
    *
    * @param root The non-null root view of the hierarchy to check.
-   * @param parameters Optional input data or preferences.
+   * @param metadata An optional {@link Metadata} that may contain check metadata defined by {@link
+   *     AccessibilityCheckMetadata}.
    * @return A list of interesting results encountered while running the check. The list will be
    *     empty if the check passes without incident.
    */
   public abstract List<AccessibilityViewCheckResult> runCheckOnViewHierarchy(
-      View root, @Nullable Parameters parameters);
+      View root, @Nullable Metadata metadata);
 
-  /** @see AccessibilityViewHierarchyCheck#runCheckOnViewHierarchy(View, Parameters) */
+  /**
+   * @see AccessibilityViewHierarchyCheck#runCheckOnViewHierarchy(View, Metadata)
+   */
   public List<AccessibilityViewCheckResult> runCheckOnViewHierarchy(View root) {
     return runCheckOnViewHierarchy(root, null);
   }
@@ -66,7 +70,8 @@ public abstract class AccessibilityViewHierarchyCheck extends AccessibilityCheck
    * @param root The root view of the hierarchy to check.
    * @param fromCheck The legacy view which calls this method.
    * @param toCheck The AccessibilityHierarchyCheck to be run.
-   * @param parameters Optional input data or preferences.
+   * @param metadata An optional {@link Metadata} that may contain check metadata defined by {@link
+   *     AccessibilityCheckMetadata}.
    * @return A list of interesting results encountered while running the check. The list will be
    *     empty if the check passes without incident.
    */
@@ -75,14 +80,16 @@ public abstract class AccessibilityViewHierarchyCheck extends AccessibilityCheck
       View root,
       AccessibilityCheck fromCheck,
       AccessibilityHierarchyCheck toCheck,
-      @Nullable Parameters parameters) {
+      @Nullable Metadata metadata) {
+    Locale locale = Locale.getDefault();
 
-    // Construct the AccessibilityHierarchyAndroid from the actual view root, as to capture all
-    // available information within the view hierarchy.
+    // Construct the AccessibilityHierarchy from the actual view root, as to capture all available
+    // information within the view hierarchy.
     View actualRoot = root.getRootView();
     BiMap<Long, View> mapFromElementIdToView = HashBiMap.<Long, View>create();
-    AccessibilityHierarchyAndroid hierarchy =
-        AccessibilityHierarchyAndroid.newBuilder(actualRoot)
+    AccessibilityHierarchy hierarchy =
+        AccessibilityHierarchy
+            .newBuilder(actualRoot)
             .setViewOriginMap(mapFromElementIdToView)
             .build();
 
@@ -91,23 +98,24 @@ public abstract class AccessibilityViewHierarchyCheck extends AccessibilityCheck
     Long rootId = mapFromElementIdToView.inverse().get(root);
     ViewHierarchyElement evalRoot = (rootId != null) ? hierarchy.getViewById(rootId) : null;
     if (evalRoot == null) {
-      LogUtils.e(
-          TAG,
+      LogUtils.log(this, Log.ERROR,
           "Unable to determine root during accessibility check delegation, using full hierarchy.");
     }
 
     // Run the delegated check
     List<AccessibilityHierarchyCheckResult> hierarchyCheckResults =
-        toCheck.runCheckOnHierarchy(hierarchy, evalRoot, parameters);
+        toCheck.runCheckOnHierarchy(hierarchy, evalRoot, metadata);
 
     // Remap results to the original format
     ArrayList<AccessibilityViewCheckResult> results = new ArrayList<>(hierarchyCheckResults.size());
     for (AccessibilityHierarchyCheckResult hierarchyCheckResult : hierarchyCheckResults) {
       ViewHierarchyElement element = hierarchyCheckResult.getElement();
-      View checkedView =
-          (element != null) ? mapFromElementIdToView.get(element.getCondensedUniqueId()) : null;
-      results.add(
-          new AccessibilityViewCheckResult(toCheck.getClass(), hierarchyCheckResult, checkedView));
+      View checkedView = (element != null)
+          ? mapFromElementIdToView.get(element.getCondensedUniqueId()) : null;
+      results.add(new AccessibilityViewCheckResult(fromCheck.getClass(),
+          hierarchyCheckResult.getType(),
+          hierarchyCheckResult.getMessage(locale),
+          checkedView));
     }
 
     return results;

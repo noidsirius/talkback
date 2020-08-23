@@ -16,8 +16,10 @@ package com.google.android.apps.common.testing.accessibility.framework.replaceme
 
 import java.net.URI;
 
-/** Used as a local replacement for Android's {@link android.net.Uri} */
-public final class Uri {
+/**
+ * Used as a local replacement for Android's {@link android.net.Uri}
+ */
+public class Uri implements Replaceable<android.net.Uri> {
 
   private final URI uri;
 
@@ -37,5 +39,10 @@ public final class Uri {
    */
   public boolean isRelative() {
     return !isAbsolute();
+  }
+
+  @Override
+  public android.net.Uri getAndroidInstance() {
+    return android.net.Uri.parse(uri.toString());
   }
 }

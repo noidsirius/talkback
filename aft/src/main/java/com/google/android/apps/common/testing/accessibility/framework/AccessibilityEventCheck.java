@@ -15,6 +15,7 @@
 package com.google.android.apps.common.testing.accessibility.framework;
 
 import android.view.accessibility.AccessibilityEvent;
+
 import java.util.Collections;
 import java.util.List;
 

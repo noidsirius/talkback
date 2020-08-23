@@ -3,6 +3,7 @@ package com.google.android.apps.common.testing.accessibility.framework.strings;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import androidx.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -17,7 +18,6 @@ import java.util.ResourceBundle;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -79,18 +79,10 @@ public class AndroidXMLResourceBundle extends ResourceBundle {
    * @param document a {@link Document} containing android style <string> tags
    * @param properties a {@link Properties} to add strings found in the given {@link Document} to
    */
-  // dereference of possibly-null reference value
-  // incompatible types in argument.
-  @SuppressWarnings({"nullness:dereference.of.nullable", "nullness:argument.type.incompatible"})
   private static void addStringsToProperties(Document document, Properties properties) {
     NodeList stringNodes = document.getElementsByTagName(ANDORID_STRING_TAG_NAME);
     for (int i = 0; i < stringNodes.getLength(); i++) {
       Node node = stringNodes.item(i);
-      // dereference of possibly-null reference node
-      // dereference of possibly-null reference node.getAttributes()
-      // dereference of possibly-null reference
-      // node.getAttributes().getNamedItem(ANDROID_STRING_NAME_ATTRIBUTE)
-      @SuppressWarnings("nullness:dereference.of.nullable")
       String key = node.getAttributes().getNamedItem(ANDROID_STRING_NAME_ATTRIBUTE).getNodeValue();
 
       String value = node.getTextContent();
@@ -184,6 +176,7 @@ public class AndroidXMLResourceBundle extends ResourceBundle {
      * @return a {@link String} to be used with {@link ResourceBundle#getBundle}
      */
     static String getBaseName(String packageName, String fileName) {
+
       return String.format("%s.%s", packageName, fileName);
     }
   }

@@ -12,6 +12,7 @@ public class Command {
     
     String action;
     String actionExtra;
+    int reportedAccessibilityIssues = 0;
     long startTime = -1;
     long endTime = -1;
 
@@ -60,6 +61,14 @@ public class Command {
         visitedWidgetCount++;
         visitedWidgets.put(widgetInfo.getXpath(), visitedWidgetCount);
         return visitedWidgetCount;
+    }
+
+    public void setReportedAccessibilityIssues(int reportedAccessibilityIssues) {
+        this.reportedAccessibilityIssues = Integer.max(this.reportedAccessibilityIssues, reportedAccessibilityIssues);
+    }
+
+    public int getReportedAccessibilityIssues() {
+        return reportedAccessibilityIssues;
     }
 
     public int getNumberOfActions() {

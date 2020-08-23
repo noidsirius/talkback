@@ -16,12 +16,12 @@ package com.google.android.apps.common.testing.accessibility.framework.checks;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import androidx.annotation.Nullable;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheck.Category;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult.AccessibilityCheckResultType;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheck;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
-import com.google.android.apps.common.testing.accessibility.framework.HashMapResultMetadata;
-import com.google.android.apps.common.testing.accessibility.framework.Parameters;
+import com.google.android.apps.common.testing.accessibility.framework.Metadata;
 import com.google.android.apps.common.testing.accessibility.framework.ResultMetadata;
 import com.google.android.apps.common.testing.accessibility.framework.replacements.Rect;
 import com.google.android.apps.common.testing.accessibility.framework.strings.StringManager;
@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Developers sometimes have containers marked clickable when they don't process click events. This
@@ -94,7 +93,7 @@ public class DuplicateClickableBoundsCheck extends AccessibilityHierarchyCheck {
   public List<AccessibilityHierarchyCheckResult> runCheckOnHierarchy(
       AccessibilityHierarchy hierarchy,
       @Nullable ViewHierarchyElement fromRoot,
-      @Nullable Parameters parameters) {
+      @Nullable Metadata metadata) {
     List<AccessibilityHierarchyCheckResult> results = new ArrayList<>();
 
     /* Find all bounds and the clickable views that have those bounds within the full hierarchy */
@@ -102,16 +101,16 @@ public class DuplicateClickableBoundsCheck extends AccessibilityHierarchyCheck {
         getLocationActionToViewMap(hierarchy.getActiveWindow().getAllViews());
 
     /* Deal with any duplicate bounds within our set of elements to evaluate */
-    List<? extends ViewHierarchyElement> viewsToEval =
+    List<ViewHierarchyElement> viewsToEval =
         (fromRoot != null) ? fromRoot.getSelfAndAllDescendants() : null;
-    for (List<? extends ViewHierarchyElement> elements : locationActionToViewMap.values()) {
+    for (List<ViewHierarchyElement> elements : locationActionToViewMap.values()) {
       if (elements.size() < 2) {
         continue; // Bounds are not duplicated
       }
 
       for (ViewHierarchyElement culprit : elements) {
-        if ((viewsToEval == null) || viewsToEval.contains(culprit)) {
-          ResultMetadata resultMetadata = new HashMapResultMetadata();
+        if ((viewsToEval == null) || (viewsToEval.contains(culprit))) {
+          Metadata resultMetadata = new Metadata();
           resultMetadata.putBoolean(KEY_CONFLICTS_BECAUSE_CLICKABLE, culprit.isClickable());
           resultMetadata
               .putBoolean(KEY_CONFLICTS_BECAUSE_LONG_CLICKABLE, culprit.isLongClickable());
@@ -137,11 +136,10 @@ public class DuplicateClickableBoundsCheck extends AccessibilityHierarchyCheck {
     if ((resultId == RESULT_ID_SAME_BOUNDS) || (resultId == RESULT_ID_VIEW_BOUNDS)) {
       ResultMetadata metadata = result.getMetadata();
       Rect bounds = getBoundsFromMetadata(metadata);
-      if ((bounds == null) && (result.getElement() != null)) {
+      ViewHierarchyElement culprit = result.getElement();
+      if ((bounds == null) && (culprit != null)) {
         // For legacy results, remap hierarchy element bounds to metadata
-        ViewHierarchyElement culprit = result.getElement();
-        ResultMetadata updatedMetadata =
-            (metadata != null) ? metadata.clone() : new HashMapResultMetadata();
+        ResultMetadata updatedMetadata = (metadata != null) ? metadata.clone() : new Metadata();
         setBoundsInMetadata(culprit.getBoundsInScreen(), updatedMetadata);
         AccessibilityHierarchyCheckResult updatedResult =
             new AccessibilityHierarchyCheckResult(
@@ -215,7 +213,7 @@ public class DuplicateClickableBoundsCheck extends AccessibilityHierarchyCheck {
    * @return map from speakable text to all views with that speakable text
    */
   private Map<ViewLocationActionHolder, List<ViewHierarchyElement>> getLocationActionToViewMap(
-      Collection<? extends ViewHierarchyElement> allViews) {
+      Collection<ViewHierarchyElement> allViews) {
     Map<ViewLocationActionHolder, List<ViewHierarchyElement>> locationActionToViewMap =
         new HashMap<>();
 

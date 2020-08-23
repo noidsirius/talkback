@@ -4,8 +4,15 @@ import android.graphics.Rect;
 import android.util.Log;
 import android.view.accessibility.AccessibilityNodeInfo;
 
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckPreset;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheck;
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
+import com.google.android.apps.common.testing.accessibility.framework.checks.TraversalOrderCheck;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class RegularCommandExecutor{
     public static boolean clickPhysical = true;
@@ -104,5 +111,9 @@ public class RegularCommandExecutor{
         RegularCommandExecutor.clickPhysical = preClickMode;
         WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
         return cmd.getExecutionState();
+    }
+
+    public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode){
+        return AccessibilityUtil.getA11yIssues(rootNode);
     }
 }
