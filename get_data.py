@@ -5,7 +5,15 @@ data = {'Geek': ("a3-shopping/a31-Geek Smarter Shopping_v2.3.7_apkpure.com.apk",
 	'ToDoList': ('todolist.apk', 'com.splendapps.splendo'),
 	'Budget': ('budgettracker.apk', 'com.colpit.diamondcoming.isavemoney'),
 	'Calorie': ('caloriecounter.apk', 'com.fatsecret.android'),
-	'School': ('schoolplanner.apk', 'daldev.android.gradehelper')
+	'School': ('schoolplanner.apk', 'daldev.android.gradehelper'),
+	'Bill': ('billreminder.apk', 'com.aa3.easybillsreminder'),
+	'Dictionary': ('dictionary.apk', 'com.dictionary'),
+	'Fuelio': ('fuelio.apk', 'com.kajda.fuelio'),
+	'Recorder': ('recorder.apk', 'com.coffeebeanventures.easyvoicerecorder'),
+	'Walmart': ('walmart.apk', 'com.walmart.android'),
+	'Clock' : ('clock.apk', 'hdesign.theclock'),
+	'Cook': ('cookpad.apk', 'com.mufumbo.android.recipe.search'),
+	'Trip': ('tripit.apk', 'com.tripit'),	
 	}
 
 import sys

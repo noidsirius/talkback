@@ -205,7 +205,7 @@ public class AccessibilityUtil {
             if (target.isSimilarWithoutContext(currentNodeInfo))
                 result.add(node);
         }
-        if(result.size() > 0){
+        if(result.size() > 1){
             List<AccessibilityNodeInfo> filteredResult = new ArrayList<>();
             for(AccessibilityNodeInfo node : result){
                 WidgetInfo currentNodeInfo = WidgetInfo.create(node);

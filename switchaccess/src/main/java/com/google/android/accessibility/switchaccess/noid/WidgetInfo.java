@@ -130,7 +130,7 @@ public class WidgetInfo {
                 continue;
             boolean isSimilarAttribute = isSimilarAttribute(other, attrName);
             if(isLocatedBy(attrName) || other.isLocatedBy(attrName))
-                return isSimilarAttribute;
+                isSimilar &= isSimilarAttribute;
             if(!attrName.equals("xpath"))
                 isSimilar &= isSimilarAttribute;
         }
@@ -158,6 +158,7 @@ public class WidgetInfo {
             // The contexts do not have xpath
             List<String> myMaskedAttributes = new ArrayList<>(maskedAttributes);
             myMaskedAttributes.add("xpath");
+            myMaskedAttributes.add("resourceId");
             int mismatches = 0;
             for (int i = 0; i < thisLeftSize; i++) {
                 if (!thisPartialContext.get(i).isSimilarWithoutContext(otherPartialContext.get(i), myMaskedAttributes))
@@ -210,35 +211,43 @@ public class WidgetInfo {
     public String getXpath(){
         if(node == null)
             return getAttr("xpath");
-        List<String> names = new ArrayList<>();
-        AccessibilityNodeInfo it = node;
-        names.add(0, String.valueOf(it.getClassName()));
-        while(it.getParent() != null){
-
-            int count = 0;
-            int length = 0;
-            String itClsName = String.valueOf(it.getClassName());
-            for(int i=0; i<it.getParent().getChildCount(); i++) {
-                AccessibilityNodeInfo child = it.getParent().getChild(i);
-                if(child == null)
-                    continue;
-                String childClsName = String.valueOf(child.getClassName());
-                if(!child.isVisibleToUser())
-                    continue;
-                if (itClsName.equals(childClsName))
-                    length++;
-                if(child.equals(it)) {
-                    count = length;
-                }
-            }
-            if(length > 1)
-                names.set(0, String.format("%s[%d]", names.get(0), count));
-            it = it.getParent();
+        try {
+            List<String> names = new ArrayList<>();
+            AccessibilityNodeInfo it = node;
             names.add(0, String.valueOf(it.getClassName()));
-//            xpath = String.valueOf(it.getClassName()) + "/" + xpath;
+            while(it.getParent() != null){
+
+                int count = 0;
+                int length = 0;
+                String itClsName = String.valueOf(it.getClassName());
+                for(int i=0; i<it.getParent().getChildCount(); i++) {
+                    // TODO: possibility of ArrayIndexOutOfBoundsException
+
+                        AccessibilityNodeInfo child = it.getParent().getChild(i);
+                        if (child == null)
+                            continue;
+                        String childClsName = String.valueOf(child.getClassName());
+                        if (!child.isVisibleToUser())
+                            continue;
+                        if (itClsName.equals(childClsName))
+                            length++;
+                        if (child.equals(it)) {
+                            count = length;
+                        }
+                }
+                if(length > 1)
+                    names.set(0, String.format("%s[%d]", names.get(0), count));
+                it = it.getParent();
+                names.add(0, String.valueOf(it.getClassName()));
+    //            xpath = String.valueOf(it.getClassName()) + "/" + xpath;
+            }
+            String xpath = "/"+String.join("/", names);
+            return xpath;
         }
-        String xpath = "/"+String.join("/", names);
-        return xpath;
+        catch (Exception exception){
+
+        }
+        return getAttr("xpath");
     }
 
     public void setXpath(String xpath) {

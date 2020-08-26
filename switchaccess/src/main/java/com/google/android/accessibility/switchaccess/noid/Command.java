@@ -88,6 +88,20 @@ public class Command {
         this.actionExtra = actionExtra;
     }
 
+    private long sleepTime = 0;
+    public Command(long sleepTime){
+        this(null, "sleep", "");
+        this.sleepTime = sleepTime;
+    }
+
+    public boolean isSleep(){
+        return action.equals("sleep");
+    }
+
+    public long getSleepTime() {
+        return sleepTime;
+    }
+
     public WidgetInfo getTargetWidgetInfo() {
         return widgetInfo;
     }

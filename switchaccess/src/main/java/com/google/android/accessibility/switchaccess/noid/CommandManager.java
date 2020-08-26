@@ -1,5 +1,6 @@
 package com.google.android.accessibility.switchaccess.noid;
 
+import android.os.Handler;
 import android.util.Log;
 import android.view.accessibility.AccessibilityNodeInfo;
 
@@ -48,7 +49,13 @@ public class CommandManager {
         return manageCommands(true);
     }
 
+    private static boolean sleepLock = false;
+
     public static boolean manageCommands(boolean isNext){
+        if(sleepLock) {
+            Log.i(AccessibilityUtil.TAG, "I'm sleeping!");
+            return true;
+        }
         if(lastCommandIndex < 0) {
             return false;
         }
@@ -70,6 +77,17 @@ public class CommandManager {
         if(currentCommand.getExecutionState() == Command.FAILED)
             currentCommand.setExecutionState(Command.NOT_STARTED);
         currentCommand.setReportedAccessibilityIssues(reportA11yIssues());
+        if(currentCommand.isSleep()){
+            sleepLock = true;
+            Log.i(AccessibilityUtil.TAG, "Sleep Command " + currentCommand.getSleepTime());
+            new Handler().postDelayed(()->{
+                sleepLock = false;
+                currentCommand.setExecutionState(Command.COMPLETED);
+                Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex+1) + " is completed!");
+                lastCommandIndex++;
+            }, currentCommand.getSleepTime()*1000);
+            return true;
+        }
         int result = executeCommand(currentCommand);
         if(result == Command.COMPLETED
                 || result == Command.COMPLETED_BY_REGULAR
@@ -120,24 +138,32 @@ public class CommandManager {
                     Log.i(AccessibilityUtil.TAG, "Json Command is null!");
                     continue;
                 }
-                String action = (String) cmd.getOrDefault("action", "UNKNOWN");
-                if(action.equals("click"))
-                    action = Command.CMD_CLICK;
-                else if(action.equals("send_keys"))
-                    action = Command.CMD_TYPE;
-                else
-                    action = "UNKNOWN";
-                WidgetInfo widgetInfo = WidgetInfo.createFromJson(cmd);
-                String message = "";
-                if(cmd.containsKey("action_args")) {
-                    JSONArray args = (JSONArray) cmd.get("action_args");
-                    if(action.equals(Command.CMD_TYPE))
-                        message = String.valueOf(args.get(0));
-                    else
-                        Log.i(AccessibilityUtil.TAG,"-------> Args: " + args);
+                long sleepTime = Long.parseLong((String) cmd.getOrDefault("sleep", "-1"));
+                if(sleepTime > -1) {
+                    Log.i(AccessibilityUtil.TAG, "Json " + "sleep" + " " + sleepTime);
+                    commandList.add(new Command(sleepTime));
                 }
-                Log.i(AccessibilityUtil.TAG, "Json " + action + " " + message + " " + widgetInfo);
-                commandList.add(new Command(widgetInfo, action, message));
+                else {
+                    String action = (String) cmd.getOrDefault("action", "UNKNOWN");
+                    if (action.equals("click"))
+                        action = Command.CMD_CLICK;
+                    else if (action.equals("send_keys"))
+                        action = Command.CMD_TYPE;
+                    else
+                        action = "UNKNOWN";
+                    WidgetInfo widgetInfo = WidgetInfo.createFromJson(cmd);
+                    String message = "";
+                    if (cmd.containsKey("action_args")) {
+                        JSONArray args = (JSONArray) cmd.get("action_args");
+                        if (action.equals(Command.CMD_TYPE))
+                            message = String.valueOf(args.get(0));
+                        else
+                            Log.i(AccessibilityUtil.TAG, "-------> Args: " + args);
+                    }
+                    Log.i(AccessibilityUtil.TAG, "Json " + action + " " + message + " " + widgetInfo);
+                    commandList.add(new Command(widgetInfo, action, message));
+                }
+
             }
 
         } catch (IOException e) {

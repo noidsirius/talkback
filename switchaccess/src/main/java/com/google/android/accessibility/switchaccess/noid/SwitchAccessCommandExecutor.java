@@ -26,6 +26,7 @@ import java.util.Set;
 
 public class SwitchAccessCommandExecutor {
     private static SwitchAccessWidgetInfo focusedNode;
+    private static boolean waitOnce = false;
     public static TreeScanNode currentRootNode;
     public static long LAST_DOWN_TIME = 0;
     private static boolean changedFocused = false;
@@ -69,6 +70,7 @@ public class SwitchAccessCommandExecutor {
                         && !focusedNode.isLastNode
                         && focusedNode.getSwitchAccessNodeCompat() == null)){
             waitingForFocusChange++;
+            Log.i(AccessibilityUtil.TAG, " Focused Node" + focusedNode);
             if(waitingForFocusChange < MAX_WAIT_FOR_CHANGE) {
                 Log.i(AccessibilityUtil.TAG, "Ignore this manageCommand since no node has been changed " + waitingForFocusChange);
                 return command.getExecutionState();
@@ -84,7 +86,8 @@ public class SwitchAccessCommandExecutor {
                 Log.i(AccessibilityUtil.TAG, "--- Change to SEARCH");
                 command.setExecutionState(Command.SEARCH);
             case Command.SEARCH:
-                List<AccessibilityNodeInfo> similarNodes = findNodesXpath(command.getTargetWidgetInfo());
+//                List<AccessibilityNodeInfo> similarNodes = findNodesXpath(command.getTargetWidgetInfo());
+                List<AccessibilityNodeInfo> similarNodes = AccessibilityUtil.findNodes(command.getTargetWidgetInfo());
                 if(similarNodes.size() == 0){
                     Log.i(AccessibilityUtil.TAG, "The target widget could not be found in current screen.");
                     command.numberOfAttempts++;

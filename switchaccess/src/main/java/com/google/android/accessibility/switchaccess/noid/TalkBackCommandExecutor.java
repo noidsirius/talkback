@@ -6,6 +6,7 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.accessibility.AccessibilityNodeInfo;
 
@@ -34,7 +35,7 @@ public class TalkBackCommandExecutor {
     private static AccessibilityNodeInfo focusedNode;
     private static boolean changedFocused = false;
     private static int waitingForFocusChange = 0;
-    private static final int MAX_WAIT_FOR_CHANGE = 2;
+    private static final int MAX_WAIT_FOR_CHANGE = 3;
     public static Map<Integer, String> pendingActions = new HashMap<>();
     public static int pendingActionId = 0;
     public static interface MyCallBack{
@@ -193,19 +194,22 @@ public class TalkBackCommandExecutor {
 
     public static boolean  performNext(AccessibilityService.GestureResultCallback callback){
         Log.i(AccessibilityUtil.TAG, "performNext");
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
-        Path swipePath = new Path();
-        swipePath.moveTo(200, 500);
-        swipePath.lineTo(800, 550);
-        gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, 400));
-        GestureDescription gestureDescription = gestureBuilder.build();
-        Log.i(AccessibilityUtil.TAG, "Execute Gesture " + gestureDescription.toString());
-        return SwitchAccessService.getInstance().dispatchGesture(gestureDescription, callback, null);
+        final int thisActionId = pendingActionId;
+        pendingActionId++;
+        pendingActions.put(thisActionId, "Pending: I'm going to do NEXT");
+        long gestureDuration = 300;
+        new Handler().postDelayed(()-> {
+            GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
+            Path swipePath = new Path();
+            swipePath.moveTo(200, 500);
+            swipePath.lineTo(800, 550);
+            gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, gestureDuration));
+            GestureDescription gestureDescription = gestureBuilder.build();
+            Log.i(AccessibilityUtil.TAG, "Execute Gesture " + gestureDescription.toString());
+            SwitchAccessService.getInstance().dispatchGesture(gestureDescription, callback, null);
+        }, 10);
+        new Handler().postDelayed(() -> pendingActions.remove(thisActionId), gestureDuration);
+        return false;
     }
 
     public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode){

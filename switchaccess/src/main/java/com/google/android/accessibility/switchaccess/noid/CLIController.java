@@ -106,7 +106,7 @@ public class CLIController {
                         CommandManager.setA11yIssueReporter(SwitchAccessCommandExecutor::getA11yIssues);
                     }
                     else if(executor.equals("regular")) {
-                        Log.i(AccessibilityUtil.TAG, "CMD: The current executor is set to SwitchAccess");
+                        Log.i(AccessibilityUtil.TAG, "CMD: The current executor is set to Regular");
                         CommandManager.setTestExecutor(RegularCommandExecutor::executeCommand);
                         CommandManager.setA11yIssueReporter(RegularCommandExecutor::getA11yIssues);
                     }
