@@ -123,7 +123,7 @@ public class WidgetInfo {
     public boolean isSimilarWithoutContext(WidgetInfo other){
         return isSimilarWithoutContext(other, maskedAttributes);
     }
-    private boolean isSimilarWithoutContext(WidgetInfo other, List<String> myMaskedAttributes){
+    public boolean isSimilarWithoutContext(WidgetInfo other, List<String> myMaskedAttributes){
         boolean isSimilar = true;
         for(String attrName : attributeNames){
             if(myMaskedAttributes.contains(attrName))

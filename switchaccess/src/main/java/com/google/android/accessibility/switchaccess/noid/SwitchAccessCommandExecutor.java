@@ -93,14 +93,8 @@ public class SwitchAccessCommandExecutor {
                     command.numberOfAttempts++;
                     if(command.numberOfAttempts >= Command.MAX_ATTEMPT) {
                         Log.i(AccessibilityUtil.TAG, "Couldn't locate the widget, Execute the command using regular test executor");
-                        List<String> maskedAttributes = new ArrayList<>(WidgetInfo.maskedAttributes);
-                        WidgetInfo.maskedAttributes.clear();
-                        RegularCommandExecutor.executeCommand(command);
-                        WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
-                        if(command.getExecutionState() == Command.COMPLETED)
+                        if(RegularCommandExecutor.executeInSwitchAccess(command) == Command.COMPLETED)
                             command.setExecutionState(Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT);
-                        else
-                            command.setExecutionState(Command.FAILED);
                         return command.getExecutionState();
                     }
                 }
@@ -112,19 +106,14 @@ public class SwitchAccessCommandExecutor {
                     command.numberOfAttempts++;
                     if(command.numberOfAttempts >= Command.MAX_ATTEMPT) {
                         Log.i(AccessibilityUtil.TAG, "Couldn't locate the widget, Execute the command using regular test executor");
-                        List<String> maskedAttributes = new ArrayList<>(WidgetInfo.maskedAttributes);
-                        WidgetInfo.maskedAttributes.clear();
-                        RegularCommandExecutor.executeCommand(command);
-                        WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
-                        if(command.getExecutionState() == Command.COMPLETED)
+                        if(RegularCommandExecutor.executeInSwitchAccess(command) == Command.COMPLETED)
                             command.setExecutionState(Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT);
-                        else
-                            command.setExecutionState(Command.FAILED);
                         return command.getExecutionState();
                     }
                 }
                 else{
                     AccessibilityNodeInfo node = similarNodes.get(0);
+                    command.setHasWidgetA11YIssue(getA11yIssues(node).size() > 0);
                     // TODO: check if something inside focusedNode is equal to the node
                     if(focusedNode != null && focusedNode.getSwitchAccessNodeCompat() != null) {
                         AccessibilityNodeInfo it = node;
@@ -132,8 +121,7 @@ public class SwitchAccessCommandExecutor {
                         Log.i(AccessibilityUtil.TAG, String.format("The following widget has been visited %d times: %s", trackAction, WidgetInfo.create(node)));
                         if(trackAction > Command.MAX_VISITED_WIDGET){
                             Log.i(AccessibilityUtil.TAG, "Execute the command using regular test executor");
-                            RegularCommandExecutor.executeCommand(command);
-                            if(command.getExecutionState() == Command.COMPLETED)
+                            if(RegularCommandExecutor.executeInSwitchAccess(command) == Command.COMPLETED)
                                 command.setExecutionState(Command.COMPLETED_BY_REGULAR);
                             return command.getExecutionState();
                         }

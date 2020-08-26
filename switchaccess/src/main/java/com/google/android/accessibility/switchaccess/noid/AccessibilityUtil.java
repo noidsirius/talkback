@@ -169,6 +169,8 @@ public class AccessibilityUtil {
         return result;
     }
 
+    public static boolean enableA11yReport = true;
+
     public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode){
         return getA11yIssues(rootNode, true);
     }
@@ -181,7 +183,7 @@ public class AccessibilityUtil {
     }
 
     public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode, boolean justError, Set<AccessibilityHierarchyCheck> checks){
-        if(rootNode == null)
+        if(rootNode == null || !enableA11yReport)
             return Collections.emptyList();
         Context context = com.android.switchaccess.SwitchAccessService.getInstance().getApplicationContext();
         AccessibilityCheckPreset.getHierarchyCheckForClass(SpeakableTextPresentCheck.class);
@@ -196,6 +198,25 @@ public class AccessibilityUtil {
             returnedResult.addAll(AccessibilityCheckResultUtils.getResultsForType(
                     results, AccessibilityCheckResult.AccessibilityCheckResultType.WARNING));
         return returnedResult;
+    }
+
+    public static List<AccessibilityNodeInfo> findNodesWithoutMasks(WidgetInfo target){
+        List<AccessibilityNodeInfo> result = new ArrayList<>();
+        for(AccessibilityNodeInfo node : getAllA11yNodeInfo(false)) {
+            WidgetInfo currentNodeInfo = WidgetInfo.create(node);
+            if (target.isSimilarWithoutContext(currentNodeInfo, new ArrayList<>()))
+                result.add(node);
+        }
+        if(result.size() > 1){
+            List<AccessibilityNodeInfo> filteredResult = new ArrayList<>();
+            for(AccessibilityNodeInfo node : result){
+                WidgetInfo currentNodeInfo = WidgetInfo.create(node);
+                if(target.isSimilarContext(currentNodeInfo))
+                    filteredResult.add(node);
+            }
+            result = filteredResult;
+        }
+        return result;
     }
 
     public static List<AccessibilityNodeInfo> findNodes(WidgetInfo target){

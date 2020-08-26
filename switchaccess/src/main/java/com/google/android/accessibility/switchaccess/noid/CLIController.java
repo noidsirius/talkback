@@ -97,6 +97,12 @@ public class CLIController {
                     Log.i(AccessibilityUtil.TAG, "CMD: the delay between each command is " + delayBetweenCommands);
                     clearCommandFile();
                 }
+                else if (nextCommand.startsWith("A11yReport_")) {
+                    Log.i(AccessibilityUtil.TAG, "CMD: set A11yReport");
+                    AccessibilityUtil.enableA11yReport = Boolean.parseBoolean(nextCommand.substring("A11yReport_".length()));
+                    Log.i(AccessibilityUtil.TAG, "CMD: A11yReport enabled: " + AccessibilityUtil.enableA11yReport);
+                    clearCommandFile();
+                }
                 else if (nextCommand.startsWith("executor_")) {
                     Log.i(AccessibilityUtil.TAG, "CMD: set executor");
                     String executor = nextCommand.substring("executor_".length());

@@ -16,6 +16,7 @@ import java.util.Set;
 
 public class RegularCommandExecutor{
     public static boolean clickPhysical = true;
+    public static boolean reportA11YIssue = true;
     public static int executeCommand(Command command){
         Log.i(AccessibilityUtil.TAG, String.format("Regular Command state: %s, action: %s, actionExtra: %s, target: %s.",
                 command.getExecutionState(),
@@ -45,6 +46,8 @@ public class RegularCommandExecutor{
                 }
                 else{
                     AccessibilityNodeInfo node = similarNodes.get(0);
+                    if(reportA11YIssue)
+                        command.setHasWidgetA11YIssue(getA11yIssues(node).size() > 0);
                     int trackAction = command.trackAction(node);
                     Log.i(AccessibilityUtil.TAG, String.format("The following widget has been visited %d times: %s", trackAction, WidgetInfo.create(node)));
                     WidgetInfo currentNodeInfo = WidgetInfo.create(node);
@@ -107,8 +110,20 @@ public class RegularCommandExecutor{
         WidgetInfo.maskedAttributes.clear();
         boolean preClickMode = RegularCommandExecutor.clickPhysical;
         RegularCommandExecutor.clickPhysical = false;
+        RegularCommandExecutor.reportA11YIssue = false;
         RegularCommandExecutor.executeCommand(cmd);
+        RegularCommandExecutor.reportA11YIssue = true;
         RegularCommandExecutor.clickPhysical = preClickMode;
+        WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
+        return cmd.getExecutionState();
+    }
+
+    public static int executeInSwitchAccess(Command cmd){
+        List<String> maskedAttributes = new ArrayList<>(WidgetInfo.maskedAttributes);
+        WidgetInfo.maskedAttributes.clear();
+        RegularCommandExecutor.reportA11YIssue = false;
+        RegularCommandExecutor.executeCommand(cmd);
+        RegularCommandExecutor.reportA11YIssue = true;
         WidgetInfo.maskedAttributes = new ArrayList<>(maskedAttributes);
         return cmd.getExecutionState();
     }

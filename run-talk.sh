@@ -11,6 +11,8 @@ sleep 1
 sleep 1
 ./send-command.sh executor_talk
 sleep 1
+./send-command.sh A11yReport_false
+sleep 1
 ./send-command.sh delay_1200
 sleep 3
 ./send-command.sh start

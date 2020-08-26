@@ -207,11 +207,12 @@ public class CommandManager {
                 else if(cmd.getExecutionState() == Command.FAILED)
                     failedCount++;
                 reportedA11yIssues += cmd.getReportedAccessibilityIssues();
-                String message = String.format("   CMD: %d $ State: %s $ #Events: %d $ Time: %d $ A11yIssueCount: %d",
+                String message = String.format("   CMD: %d $ State: %s $ #Events: %d $ Time: %d $ A11yIssueCount: %d $ WidgetIssue: %s",
                         i + 1, Command.getActionStr(cmd.getExecutionState()),
                         cmd.getNumberOfActions(),
                         cmd.getTime(),
-                        cmd.getReportedAccessibilityIssues());
+                        cmd.getReportedAccessibilityIssues(),
+                        cmd.isHasWidgetA11YIssue());
                 Log.i(AccessibilityUtil.TAG+"_RESULT", message);
                 myWriter.write(message+'\n');
             }

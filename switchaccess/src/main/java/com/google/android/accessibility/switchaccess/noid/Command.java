@@ -13,6 +13,7 @@ public class Command {
     String action;
     String actionExtra;
     int reportedAccessibilityIssues = 0;
+    boolean hasWidgetA11YIssue = false;
     long startTime = -1;
     long endTime = -1;
 
@@ -71,12 +72,22 @@ public class Command {
         return reportedAccessibilityIssues;
     }
 
+
+    public void setHasWidgetA11YIssue(boolean hasWidgetA11YIssue) {
+        this.hasWidgetA11YIssue = hasWidgetA11YIssue;
+    }
+
+    public boolean isHasWidgetA11YIssue() {
+        return hasWidgetA11YIssue;
+    }
+
     public int getNumberOfActions() {
         return numberOfActions;
     }
 
     public final static int MAX_ATTEMPT = 4;
     public final static int MAX_VISITED_WIDGET = 3;
+    public final static int MAX_INTERACTION = 30;
 
     public Command(WidgetInfo widgetInfo, String action) {
         this(widgetInfo, action, null);
