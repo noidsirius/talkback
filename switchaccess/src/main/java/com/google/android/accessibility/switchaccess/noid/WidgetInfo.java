@@ -58,12 +58,53 @@ public class WidgetInfo {
         String contentDescription = String.valueOf(node.getContentDescription());
         String text = String.valueOf(node.getText());
         String clsName = String.valueOf(node.getClassName());
+        if (clsName.endsWith("Layout")){
+//            Log.i(AccessibilityUtil.TAG, " --> "+clsName + " " + text + " " + contentDescription);
+            if (text.equals("null") && contentDescription.equals("null")) {
+                String tmp = getFirstText(node);
+                if (tmp != null)
+                    text = tmp;
+                else {
+                    tmp = getFirstContentDescription(node);
+                    if (tmp != null)
+                        contentDescription = tmp;
+                }
+            }
+        }
         WidgetInfo widgetInfo = new WidgetInfo(resourceId, contentDescription, text, clsName);
         widgetInfo.setNodeCompat(node);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             widgetInfo.setXpath(widgetInfo.getXpath());
         }
         return widgetInfo;
+    }
+
+    private static String getFirstText(AccessibilityNodeInfo node){
+        if(node == null)
+            return null;
+        String text = String.valueOf(node.getText());
+        if(!text.equals("null"))
+            return text;
+        for(int i=0; i<node.getChildCount(); i++){
+            text = getFirstText(node.getChild(i));
+            if(text != null)
+                return text;
+        }
+        return text;
+    }
+
+    private static String getFirstContentDescription(AccessibilityNodeInfo node){
+        if(node == null)
+            return null;
+        String text = String.valueOf(node.getContentDescription());
+        if(!text.equals("null"))
+            return text;
+        for(int i=0; i<node.getChildCount(); i++){
+            text = getFirstContentDescription(node.getChild(i));
+            if(text != null)
+                return text;
+        }
+        return text;
     }
 
     public static WidgetInfo getWidget(AccessibilityNodeInfo node){
@@ -129,8 +170,10 @@ public class WidgetInfo {
             if(myMaskedAttributes.contains(attrName))
                 continue;
             boolean isSimilarAttribute = isSimilarAttribute(other, attrName);
-            if(isLocatedBy(attrName) || other.isLocatedBy(attrName))
-                isSimilar &= isSimilarAttribute;
+            if(isLocatedBy(attrName) || other.isLocatedBy(attrName)) {
+                return isSimilarAttribute;
+//                isSimilar &= isSimilarAttribute;
+            }
             if(!attrName.equals("xpath"))
                 isSimilar &= isSimilarAttribute;
         }

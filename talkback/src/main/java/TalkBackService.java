@@ -147,7 +147,7 @@ public class TalkBackService extends AccessibilityService
 
   /** Permission required to perform gestures. */
   public static final String PERMISSION_TALKBACK =
-      "com.google.android.marvin.feedback.permission.TALKBACK";
+      "com.google.android.marvin.feedback.permission.TALKBACK2";
 
   /** The intent action used to perform a custom gesture action. */
   public static final String ACTION_PERFORM_GESTURE_ACTION = "performCustomGestureAction";
@@ -737,7 +737,6 @@ public class TalkBackService extends AccessibilityService
     if (!isServiceActive()) {
       return false;
     }
-    Log.i("NOID_TB", "onGesture " + gestureId);
 
     Performance perf = Performance.getInstance();
     EventId eventId = perf.onGestureEventReceived(gestureId);

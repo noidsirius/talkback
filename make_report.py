@@ -19,8 +19,8 @@ if os.path.isdir(result_dir):
                 for x in line.split('$'):
                     entry.append(x.split(':')[1].strip())
                 entry[-1] = str(int(entry[-1])/1000)
-            if entry[8] == "-1":
-                entry[8] = " "
+                if entry[8] == "-1":
+                    entry[8] = " "
             entries.append(entry)
     entries.sort(key=lambda x: x[0])
     print(",".join(header))

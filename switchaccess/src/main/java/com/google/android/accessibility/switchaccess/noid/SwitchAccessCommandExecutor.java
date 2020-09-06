@@ -112,13 +112,13 @@ public class SwitchAccessCommandExecutor {
                     }
                 }
                 else{
-                    AccessibilityNodeInfo node = similarNodes.get(0);
-                    command.setHasWidgetA11YIssue(getA11yIssues(node).size() > 0);
+                    AccessibilityNodeInfo targetNode = similarNodes.get(0);
+                    command.setHasWidgetA11YIssue(getA11yIssues(targetNode).size() > 0);
                     // TODO: check if something inside focusedNode is equal to the node
                     if(focusedNode != null && focusedNode.getSwitchAccessNodeCompat() != null) {
-                        AccessibilityNodeInfo it = node;
+
                         int trackAction = command.trackAction(focusedNode.getSwitchAccessNodeCompat().unwrap());
-                        Log.i(AccessibilityUtil.TAG, String.format("The following widget has been visited %d times: %s", trackAction, WidgetInfo.create(node)));
+                        Log.i(AccessibilityUtil.TAG, String.format("The following widget has been visited %d times: %s", trackAction, WidgetInfo.create(focusedNode.getSwitchAccessNodeCompat().unwrap())));
                         if(trackAction > Command.MAX_VISITED_WIDGET){
                             Log.i(AccessibilityUtil.TAG, "Execute the command using regular test executor");
                             if(RegularCommandExecutor.executeInSwitchAccess(command) == Command.COMPLETED)
@@ -128,54 +128,53 @@ public class SwitchAccessCommandExecutor {
                         boolean isSimilar = false;
                         SwitchAccessNodeCompat firstReachableNodeCompat = null;
                         Map<AccessibilityNodeInfo, SwitchAccessNodeCompat> allNodeCompats = getAllNodes(currentRootNode);
-                        while(it != null){
-                            if(allNodeCompats.containsKey(it)) {
-                                firstReachableNodeCompat = allNodeCompats.get(it);
+                        List<AccessibilityNodeInfo> queue = new ArrayList<>();
+                        queue.add(targetNode);
+                        // Find reachable node in children
+                        for(int i=0; i< queue.size(); i++){
+                            if(allNodeCompats.containsKey(queue.get(i))) {
+                                firstReachableNodeCompat = allNodeCompats.get(queue.get(i));
                                 break;
                             }
-                            it = it.getParent();
+                            for(int j=0; j<queue.get(i).getChildCount(); j++)
+                                queue.add(queue.get(i).getChild(j));
+                        }
+                        // Find reachable node in parents
+                        if(firstReachableNodeCompat == null) {
+                            AccessibilityNodeInfo it = targetNode;
+                            while (it != null) {
+                                if (allNodeCompats.containsKey(it)) {
+                                    firstReachableNodeCompat = allNodeCompats.get(it);
+                                    break;
+                                }
+                                it = it.getParent();
+                            }
                         }
                         if(firstReachableNodeCompat == null){
                             Log.i(AccessibilityUtil.TAG, "-- FIRST REACHABLE NODECOMPAT IS NULL");
                         }
+                        Log.i(AccessibilityUtil.TAG, "-- FIRST REACHABLE NODECOMPAT IS " + firstReachableNodeCompat);
                         isSimilar = firstReachableNodeCompat != null && firstReachableNodeCompat.equals(focusedNode.getSwitchAccessNodeCompat());
-//                        List<AccessibilityNodeInfo> queue = new ArrayList<>();
-//                        queue.add(it);
-//                        for(int i=0; i< queue.size(); i++){
-//                            if(it.equals(node)){
-//                                isSimilar = true;
-//                                break;
-//                            }
-//                            for(int j=0; j<it.getChildCount(); j++)
-//                                queue.add(it.getChild(j));
-//                        }
-
-//                        boolean isSimilar = focusedNode.getSwitchAccessNodeCompat().unwrap().equals(node);
                         if (isSimilar) {
                             if (command.getAction().equals(Command.CMD_ASSERT)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do ASSERT");
                             } else if (command.getAction().equals(Command.CMD_CLICK)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do CLICK");
-//                                command.numberOfActions++;
                                 performSelect();
                             } else if (command.getAction().equals(Command.CMD_TYPE)) {
                                 Log.i(AccessibilityUtil.TAG, "--- Do TYPE AND NEXT");
                                 AccessibilityUtil.performType(focusedNode.getSwitchAccessNodeCompat().unwrap(), command.getActionExtra());
-//                                command.numberOfActions++;
-//                                performNext();
                             } else {
                                 Log.i(AccessibilityUtil.TAG, "Command's action is unknown " + command.getAction());
                             }
                             command.setExecutionState(Command.COMPLETED);
                         } else {
                             Log.i(AccessibilityUtil.TAG, "--- Do NEXT");
-//                            command.numberOfActions++;
                             performNext();
                         }
                     }
                     else{
                         Log.i(AccessibilityUtil.TAG, "--- Node is not focused. Do NEXT");
-//                        command.numberOfActions++;
                         performNext();
                     }
                     return command.getExecutionState();
@@ -242,27 +241,11 @@ public class SwitchAccessCommandExecutor {
         for (TreeScanSystemProvidedNode treeScanSystemProvidedNode : result) {
             SwitchAccessNodeCompat nodeCompat = treeScanSystemProvidedNode.getNodeInfoCompat();
             if(nodeCompat != null) {
-//                SwitchAccessNodeCompat parent = nodeCompat;
-//                AccessibilityWindowInfoCompat parentWindow = nodeCompat.getWindow();
-//                while(parentWindow!= nullparentWindow.getParent() != null)
-//                    parentWindow = parentWindow.getParent();
-//                AccessibilityNodeInfoCompat nn = parentWindow.getRoot();
-//                while(parent.getParent() != null)
-//                    parent = parent.getParent();
-//                if(oneParent == null)
-//                    oneParent = nn.unwrap();
-//                else if(!oneParent.equals(nn.unwrap()))
-//                    Log.i(SwitchAccessCommandExecutor.TAG, "\n\n\n%%%%%%%%%%%%%%% Parent is not one! %%%%%%%%%%%% " + nn.unwrap() + "\n\n");
-//                Log.i(SwitchAccessCommandExecutor.TAG, "\t\tleafNodeCompat " + " " + nodeCompat.getViewIdResourceName() + " " + " " + nodeCompat.getText() + " " + nodeCompat.getContentDescription());
-//                getAllA11yNodeInfo(nodeCompat.unwrap(), "\t\t--");
                 nodes.put(nodeCompat.unwrap(), nodeCompat);
             }
             else
                 Log.i(AccessibilityUtil.TAG, "\t\tleafNodeCompat null");
         }
-//        Log.i(SwitchAccessCommandExecutor.TAG, "\n\nNow Parent");
-//        getAllA11yNodeInfo(oneParent);
-//        Log.i(SwitchAccessCommandExecutor.TAG, "---------\n\n");
         return nodes;
     }
 

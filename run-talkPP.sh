@@ -11,7 +11,7 @@ sleep 1
 sleep 1
 ./send-command.sh executor_talk
 sleep 1
-./send-command.sh delay_1000
+./send-command.sh delay_2000
 sleep 3
 ./send-command.sh start
 ./run-post.sh `basename $TEST_GUIDELINE` "talkPP"

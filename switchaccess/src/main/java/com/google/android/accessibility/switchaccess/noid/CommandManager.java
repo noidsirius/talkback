@@ -88,16 +88,28 @@ public class CommandManager {
             }, currentCommand.getSleepTime()*1000);
             return true;
         }
-        int result = executeCommand(currentCommand);
-        if(result == Command.COMPLETED
-                || result == Command.COMPLETED_BY_REGULAR
-                || result == Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT) {
-            Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex+1) + " is completed!");
-            lastCommandIndex++;
+        if(currentCommand.shouldSkip()){
+            int result = RegularCommandExecutor.executeInSwitchAccess(currentCommand);
+            if(result == Command.COMPLETED) {
+                Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex+1) + " is completed!");
+                lastCommandIndex++;
+            }
+            else if(result == Command.FAILED) {
+                Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex + 1) + " is failed!");
+                lastCommandIndex++;
+            }
         }
-        else if(result == Command.FAILED) {
-            Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex + 1) + " is failed!");
-            lastCommandIndex++;
+        else {
+            int result = executeCommand(currentCommand);
+            if (result == Command.COMPLETED
+                    || result == Command.COMPLETED_BY_REGULAR
+                    || result == Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT) {
+                Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex + 1) + " is completed!");
+                lastCommandIndex++;
+            } else if (result == Command.FAILED) {
+                Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex + 1) + " is failed!");
+                lastCommandIndex++;
+            }
         }
         return true;
     }
@@ -144,6 +156,7 @@ public class CommandManager {
                     commandList.add(new Command(sleepTime));
                 }
                 else {
+                    boolean skip = (boolean) cmd.getOrDefault("skip", false);
                     String action = (String) cmd.getOrDefault("action", "UNKNOWN");
                     if (action.equals("click"))
                         action = Command.CMD_CLICK;
@@ -161,7 +174,7 @@ public class CommandManager {
                             Log.i(AccessibilityUtil.TAG, "-------> Args: " + args);
                     }
                     Log.i(AccessibilityUtil.TAG, "Json " + action + " " + message + " " + widgetInfo);
-                    commandList.add(new Command(widgetInfo, action, message));
+                    commandList.add(new Command(widgetInfo, action, message, skip));
                 }
 
             }

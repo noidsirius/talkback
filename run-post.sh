@@ -2,10 +2,10 @@
 TEST_NAME=$1
 TAG=$2
 TDIR=results/$TAG
-adb shell screenrecord /data/local/tmp/clip.mp4 &
-VIDEO_PID=$!
-adb logcat | grep "NOID_SA" > $TDIR/$TEST_NAME.log &
-LOG_PID=$!
+#adb shell screenrecord /data/local/tmp/clip.mp4 &
+#VIDEO_PID=$!
+#adb logcat | grep "NOID_SA" > $TDIR/$TEST_NAME.log &
+#LOG_PID=$!
 while [ ! -f my_result.txt ]
 do
   echo "Wait.."
@@ -16,12 +16,15 @@ done
 sleep 1
 echo "Stop recording " $VIDEO_PID
 echo "kill -INT $VIDEO_PID"
-kill -INT $VIDEO_PID
-kill -INT $LOG_PID
+#kill -INT $VIDEO_PID
+#kill -INT $LOG_PID
 sleep 1
-kill -9 $VIDEO_PID
-kill -9 $LOG_PID
+#kill -9 $VIDEO_PID
+#kill -9 $LOG_PID
 echo "-----"
+sleep 1
+PKG=`python3 get_data.py pkg $TEST_NAME`
+adb shell am force-stop $PKG
 sleep 1
 cat my_result.txt
 mkdir -p $TDIR

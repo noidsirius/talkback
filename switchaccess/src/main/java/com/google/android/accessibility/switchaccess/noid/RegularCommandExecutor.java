@@ -61,11 +61,11 @@ public class RegularCommandExecutor{
                             AccessibilityUtil autil = new AccessibilityUtil(com.android.switchaccess.SwitchAccessService.getInstance());
                             Rect box = new Rect();
                             node.getBoundsInScreen(box);
-                            int x = (box.left + box.right) / 2;
-                            int y = (box.top + box.bottom) / 2;
+                            int x = box.centerX();
+                            int y = box.centerY();
                             clickResult = autil.performTap(x, y);
                         }
-                        else {
+                        if(!clickResult) {
                             clickResult = node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                         }
                         Log.i(AccessibilityUtil.TAG, "--- Result " + clickResult);

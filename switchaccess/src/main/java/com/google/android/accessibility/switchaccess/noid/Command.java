@@ -12,6 +12,7 @@ public class Command {
     
     String action;
     String actionExtra;
+    boolean skip;
     int reportedAccessibilityIssues = 0;
     boolean hasWidgetA11YIssue = false;
     long startTime = -1;
@@ -86,17 +87,22 @@ public class Command {
     }
 
     public final static int MAX_ATTEMPT = 4;
-    public final static int MAX_VISITED_WIDGET = 3;
-    public final static int MAX_INTERACTION = 30;
+    public final static int MAX_VISITED_WIDGET = 4;
+    public final static int MAX_INTERACTION = 50;
 
     public Command(WidgetInfo widgetInfo, String action) {
         this(widgetInfo, action, null);
     }
 
     public Command(WidgetInfo widgetInfo, String action, String actionExtra) {
+        this(widgetInfo, action, actionExtra, false);
+    }
+
+    public Command(WidgetInfo widgetInfo, String action, String actionExtra, boolean skip) {
         this.widgetInfo = widgetInfo;
         this.action = action;
         this.actionExtra = actionExtra;
+        this.skip = skip;
     }
 
     private long sleepTime = 0;
@@ -111,6 +117,10 @@ public class Command {
 
     public long getSleepTime() {
         return sleepTime;
+    }
+
+    public boolean shouldSkip() {
+        return skip;
     }
 
     public WidgetInfo getTargetWidgetInfo() {

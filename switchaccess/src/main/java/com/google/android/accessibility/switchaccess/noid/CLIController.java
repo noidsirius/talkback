@@ -14,7 +14,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -70,7 +69,22 @@ public class CLIController {
                         WidgetInfo.maskedAttributes.add(tokens[i]);
                     }
                     clearCommandFile();
-                } else if (nextCommand.equals("init")) {
+                }
+                else if (nextCommand.startsWith("talk_")) {
+                    Log.i(AccessibilityUtil.TAG, "CMD: talk");
+                    String talk_cmd = nextCommand.substring("talk_".length());
+                    if(talk_cmd.equals("top")){
+                        // TODO: Not implemented
+                    }
+                    else if(talk_cmd.equals("next")){
+                        TalkBackCommandExecutor.performNext(null);
+                    }
+                    else if(talk_cmd.equals("stop")){
+                        // TODO: Not implemented
+                    }
+                    clearCommandFile();
+                }
+                else if (nextCommand.equals("init")) {
                     Log.i(AccessibilityUtil.TAG, "CMD: init");
                     CommandManager.initCommands();
                     clearCommandFile();

@@ -5,12 +5,17 @@ import android.accessibilityservice.GestureDescription;
 import android.content.Context;
 import android.graphics.Path;
 import android.graphics.Rect;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
+
+import com.google.android.accessibility.utils.AccessibilityNodeInfoUtils;
+import com.google.android.accessibility.utils.AccessibilityServiceCompatUtils;
+import com.google.android.accessibility.utils.traversal.OrderedTraversalStrategy;
+import com.google.android.accessibility.utils.traversal.TraversalStrategy;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckPreset;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResultUtils;
@@ -95,6 +100,8 @@ public class AccessibilityUtil {
     public boolean performTap(int x, int y, int duration){ return performTap(x, y, 0, duration); }
     public boolean performTap(int x, int y, int startTime, int duration){ return performTap(x, y, startTime, duration, defaultCallBack); }
     public boolean performTap(int x, int y, int startTime, int duration, AccessibilityService.GestureResultCallback callback){
+        if(x < 0 || y < 0)
+            return false;
         GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
         Path swipePath = new Path();
         swipePath.moveTo(x, y);
@@ -167,6 +174,39 @@ public class AccessibilityUtil {
         for(int i=0; i<rootNode.getChildCount(); i++)
             result.addAll(getAllA11yNodeInfo(rootNode.getChild(i), " " +prefix+rootNode.getClassName()+"/", log));
         return result;
+    }
+
+    public static AccessibilityNodeInfo getNextFocusedNode(AccessibilityNodeInfo currentNodeInfo){
+        Log.i(TAG, "In getNextFocusedNode: ");
+        AccessibilityNodeInfoCompat currentNode = AccessibilityNodeInfoUtils.toCompat(currentNodeInfo);
+        AccessibilityNodeInfoCompat rootNode = AccessibilityServiceCompatUtils.getRootInActiveWindow(com.android.switchaccess.SwitchAccessService.getInstance());
+        Log.i(TAG, "Root Node : " + rootNode);
+        if(rootNode == null)
+            return null;
+        AccessibilityNodeInfoCompat nextNode = currentNode;
+        TraversalStrategy traversal = (TraversalStrategy) new OrderedTraversalStrategy(rootNode);
+        Log.i(TAG, "Traversal : " + traversal);
+        try {
+            while ( nextNode != null) {
+                nextNode = traversal.findFocus(nextNode, TraversalStrategy.SEARCH_FOCUS_FORWARD);
+                if(AccessibilityNodeInfoUtils.shouldFocusNode(nextNode))
+                    break;
+            }
+        } finally {
+            Log.i(TAG, "Here");
+            traversal.recycle();
+        }
+        Log.i(TAG, "Next Focousable Node: " + nextNode);
+        if(nextNode != null) {
+            Rect nextBox = new Rect();
+            nextNode.getBoundsInScreen(nextBox);
+            Rect currentBox = new Rect();
+            currentNode.getBoundsInScreen(currentBox);
+            if(currentBox.contains(nextBox.centerX(), nextBox.centerY()))
+                return null;
+            return nextNode.unwrap();
+        }
+        return null;
     }
 
     public static boolean enableA11yReport = true;

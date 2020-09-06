@@ -5,7 +5,6 @@ import android.accessibilityservice.GestureDescription;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -22,17 +21,17 @@ import com.google.android.apps.common.testing.accessibility.framework.checks.Red
 import com.google.android.apps.common.testing.accessibility.framework.checks.SpeakableTextPresentCheck;
 import com.google.android.apps.common.testing.accessibility.framework.checks.TraversalOrderCheck;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 public class TalkBackCommandExecutor {
     private static AccessibilityNodeInfo focusedNode;
+    private static AccessibilityNodeInfo lastFocusedNode;
     private static boolean changedFocused = false;
     private static int waitingForFocusChange = 0;
     private static final int MAX_WAIT_FOR_CHANGE = 3;
@@ -43,6 +42,7 @@ public class TalkBackCommandExecutor {
     }
     public static void setFocusedNode(AccessibilityNodeInfo node){
         focusedNode = node;
+        changedFocused = true;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.P)
@@ -71,16 +71,9 @@ public class TalkBackCommandExecutor {
                 Log.i(AccessibilityUtil.TAG, "--- Change to SEARCH");
                 command.setExecutionState(Command.SEARCH);
             case Command.SEARCH:
-                // Find the target without mask
-                // If there is none or more than one -> FAIL
-                // Else find the target widget with mask and try to reach it
-                // If the focused node is visited more than X times do random exploration
-                // If it's visited more than Y times -> UNABLE TO LOCATE
-                // When reach it, if it's not the same as actual target -> UNABLE TO LOCATE
-                // If a command takes more than 50 steps -> UNABLE TO LOCATE
                 List<AccessibilityNodeInfo> matchedNodes = AccessibilityUtil.findNodesWithoutMasks(command.getTargetWidgetInfo());
                 if(matchedNodes.size() != 1){
-                    Log.i(AccessibilityUtil.TAG, "The target widget is not unique.");
+                    Log.i(AccessibilityUtil.TAG, "The target widget is not unique. " + matchedNodes.size());
                     command.setExecutionState(Command.FAILED);
                     return command.getExecutionState();
                 }
@@ -99,11 +92,7 @@ public class TalkBackCommandExecutor {
                     return command.getExecutionState();
                 }
                 Log.i(AccessibilityUtil.TAG, String.format("The following widget has been visited %d times: %s", visitedWidget, WidgetInfo.create(focusedNode)));
-                if(visitedWidget == Command.MAX_VISITED_WIDGET){
-                    if (randomExplore())
-                        return command.getExecutionState();
-                }
-                else if(visitedWidget > Command.MAX_VISITED_WIDGET){
+                if(visitedWidget > Command.MAX_VISITED_WIDGET){
                     Log.i(AccessibilityUtil.TAG, "Max Visitied Widget threshold. Execute the command using regular test executor");
                     if(RegularCommandExecutor.executeInTalkBack(command) == Command.COMPLETED)
                         command.setExecutionState(Command.COMPLETED_BY_REGULAR);
@@ -148,6 +137,7 @@ public class TalkBackCommandExecutor {
                     case Command.CMD_CLICK:
                         Log.i(AccessibilityUtil.TAG, "--- Do CLICK");
                         accessibilityUtil.performDoubleTap();
+                        changedFocused = false;
                         break;
                     case Command.CMD_TYPE:
                         Log.i(AccessibilityUtil.TAG, "--- Do TYPE AND NEXT");
@@ -201,19 +191,30 @@ public class TalkBackCommandExecutor {
         Log.i(AccessibilityUtil.TAG, "performNext");
         final int thisActionId = pendingActionId;
         pendingActionId++;
-        pendingActions.put(thisActionId, "Pending: I'm going to do NEXT");
+                pendingActions.put(thisActionId, "Pending: I'm going to do NEXT");
         long gestureDuration = 400;
-        new Handler().postDelayed(()-> {
+        new Handler().postDelayed(() -> {
             GestureDescription.Builder gestureBuilder = new GestureDescription.Builder();
             Path swipePath = new Path();
-            swipePath.moveTo(200, 500);
-            swipePath.lineTo(800, 550);
+            Random random = new Random();
+            int BASE = 5;
+            int dx1 = random.nextInt(2 * BASE) - BASE;
+            int dx2 = random.nextInt(2 * BASE) - BASE;
+            int dy1 = random.nextInt(2 * BASE) - BASE;
+            int dy2 = random.nextInt(2 * BASE) - BASE;
+            int x1 = 50 + dx1;
+            int x2 = 500 + dx2;
+            int y1 = 500 + dy1;
+            int y2 = 600 + dy2;
+            swipePath.moveTo(x1, y1);
+            swipePath.lineTo(x2, y2);
             gestureBuilder.addStroke(new GestureDescription.StrokeDescription(swipePath, 0, gestureDuration));
             GestureDescription gestureDescription = gestureBuilder.build();
             Log.i(AccessibilityUtil.TAG, "Execute Gesture " + gestureDescription.toString());
             SwitchAccessService.getInstance().dispatchGesture(gestureDescription, callback, null);
         }, 10);
-        new Handler().postDelayed(() -> pendingActions.remove(thisActionId), gestureDuration);
+    new Handler().postDelayed(() -> pendingActions.remove(thisActionId), gestureDuration);
+changedFocused = false;
         return false;
     }
 
