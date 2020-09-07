@@ -104,11 +104,11 @@ public class TalkBackCommandExecutor {
                     performNext(null);
                     return command.getExecutionState();
                 }
-                AccessibilityNodeInfo node = similarNodes.get(0);
-                AccessibilityNodeInfo firstReachableNode = node;
+                AccessibilityNodeInfo targetNode = similarNodes.get(0);
+                AccessibilityNodeInfo firstReachableNode = targetNode;
                 boolean isSimilar = firstReachableNode != null && firstReachableNode.equals(focusedNode);
                 if(!isSimilar) {
-                    AccessibilityNodeInfo it = node;
+                    AccessibilityNodeInfo it = targetNode;
                     while (it != null) {
                         if (it.isClickable()) {
                             firstReachableNode = it;
@@ -124,7 +124,7 @@ public class TalkBackCommandExecutor {
                     performNext(null);
                     return command.getExecutionState();
                 }
-                if(!node.equals(matchedNodes.get(0))){
+                if(!targetNode.equals(matchedNodes.get(0))){
                     Log.i(AccessibilityUtil.TAG, "The located widget is not correct, use regular executor");
                     if(RegularCommandExecutor.executeInTalkBack(command) == Command.COMPLETED)
                         command.setExecutionState(Command.COMPLETED_BY_REGULAR);

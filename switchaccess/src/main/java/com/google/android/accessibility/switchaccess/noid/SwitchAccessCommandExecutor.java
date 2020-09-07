@@ -139,6 +139,10 @@ public class SwitchAccessCommandExecutor {
                             for(int j=0; j<queue.get(i).getChildCount(); j++)
                                 queue.add(queue.get(i).getChild(j));
                         }
+//                        if(firstReachableNodeCompat != null)
+//                            Log.i(AccessibilityUtil.TAG, String.format("After child %s", WidgetInfo.create(firstReachableNodeCompat.unwrap())));
+//                        else
+//                            Log.i(AccessibilityUtil.TAG, "After child null");
                         // Find reachable node in parents
                         if(firstReachableNodeCompat == null) {
                             AccessibilityNodeInfo it = targetNode;
@@ -148,10 +152,8 @@ public class SwitchAccessCommandExecutor {
                                     break;
                                 }
                                 it = it.getParent();
+//                                Log.i(AccessibilityUtil.TAG, "\tParent: " + WidgetInfo.create(it));
                             }
-                        }
-                        if(firstReachableNodeCompat == null){
-                            Log.i(AccessibilityUtil.TAG, "-- FIRST REACHABLE NODECOMPAT IS NULL");
                         }
                         Log.i(AccessibilityUtil.TAG, "-- FIRST REACHABLE NODECOMPAT IS " + firstReachableNodeCompat);
                         isSimilar = firstReachableNodeCompat != null && firstReachableNodeCompat.equals(focusedNode.getSwitchAccessNodeCompat());
@@ -242,6 +244,7 @@ public class SwitchAccessCommandExecutor {
             SwitchAccessNodeCompat nodeCompat = treeScanSystemProvidedNode.getNodeInfoCompat();
             if(nodeCompat != null) {
                 nodes.put(nodeCompat.unwrap(), nodeCompat);
+//                Log.i(AccessibilityUtil.TAG, "\t\t$$\t " + nodeCompat.unwrap() + " \n\t" + nodeCompat);
             }
             else
                 Log.i(AccessibilityUtil.TAG, "\t\tleafNodeCompat null");
