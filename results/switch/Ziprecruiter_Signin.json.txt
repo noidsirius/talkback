@@ -1,0 +1,8 @@
+   CMD: 1 $ State: COMPLETED $ #Events: 1 $ Time: 4093 $ A11yIssueCount: 0 $ WidgetIssue: false
+   CMD: 2 $ State: COMPLETED $ #Events: 2 $ Time: 2062 $ A11yIssueCount: 0 $ WidgetIssue: false
+   CMD: 3 $ State: COMPLETED $ #Events: 4 $ Time: 6125 $ A11yIssueCount: 0 $ WidgetIssue: false
+   CMD: 4 $ State: COMPLETED $ #Events: 3 $ Time: 8215 $ A11yIssueCount: 0 $ WidgetIssue: false
+   CMD: 5 $ State: COMPLETED $ #Events: 3 $ Time: 4121 $ A11yIssueCount: 0 $ WidgetIssue: false
+   CMD: 6 $ State: COMPLETED $ #Events: 2 $ Time: 2088 $ A11yIssueCount: 0 $ WidgetIssue: false
+   CMD: 7 $ State: COMPLETED_BY_REGULAR_UNABLE_TO_DETECT $ #Events: 1 $ Time: 6166 $ A11yIssueCount: 0 $ WidgetIssue: false
+Result: false $ Steps: 7 $ Completed: 6 $ Failed: 0 $ Unlocatable: 1 $ Unreachable: 0 $ FirstProblem: 7 $ ReportedA11y: 0 $ TotalEvents: 16 $ TotalTime: 46879
