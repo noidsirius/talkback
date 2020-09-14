@@ -1,6 +1,6 @@
 #!/bin/bash
 TEST_GUIDELINE=$1
-adb shell settings put secure enabled_accessibility_services com.google.android.accessibility.talkback/com.android.switchaccess.SwitchAccessService:com.google.android.accessibility.talkback/com.google.android.marvin.talkback.TalkBackService
+adb shell settings put secure enabled_accessibility_services com.google.android.accessibility.talkback/com.android.switchaccess.SwitchAccessService:com.google.android.marvin.talkback/com.google.android.marvin.talkback.TalkBackService
 sleep 1
 ./run-common.sh $TEST_GUIDELINE
 sleep 2

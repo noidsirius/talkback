@@ -7,10 +7,16 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckPreset;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheck;
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult;
+import com.google.android.apps.common.testing.accessibility.framework.checks.DuplicateSpeakableTextCheck;
+import com.google.android.apps.common.testing.accessibility.framework.checks.EditableContentDescCheck;
+import com.google.android.apps.common.testing.accessibility.framework.checks.RedundantDescriptionCheck;
+import com.google.android.apps.common.testing.accessibility.framework.checks.SpeakableTextPresentCheck;
 import com.google.android.apps.common.testing.accessibility.framework.checks.TraversalOrderCheck;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -18,11 +24,16 @@ public class RegularCommandExecutor{
     public static boolean clickPhysical = true;
     public static boolean reportA11YIssue = true;
     public static int executeCommand(Command command){
-        Log.i(AccessibilityUtil.TAG, String.format("Regular Command state: %s, action: %s, actionExtra: %s, target: %s.",
+        Log.i(AccessibilityUtil.TAG, String.format("Regular Command state: %s, action: %s, actionExtra: %s, target: %s, skip: %s.",
                 command.getExecutionState(),
                 command.getAction(),
                 command.getActionExtra(),
-                command.getTargetWidgetInfo()));
+                command.getTargetWidgetInfo(),
+                command.shouldSkip()));
+        if(command.shouldSkip()){
+            if(WidgetInfo.maskedAttributes.size() > 0)
+                return RegularCommandExecutor.executeInSwitchAccess(command);
+        }
         switch (command.getExecutionState()){
             case Command.NOT_STARTED:
                 Log.i(AccessibilityUtil.TAG, "--- Change to SEARCH");
@@ -32,8 +43,14 @@ public class RegularCommandExecutor{
                 if(similarNodes.size() == 0){
                     Log.i(AccessibilityUtil.TAG, "The target widget could not be found in current screen.");
                     command.numberOfAttempts++;
-                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT)
+                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT) {
+                        if(WidgetInfo.maskedAttributes.size() > 0) {
+                            if(RegularCommandExecutor.executeInSwitchAccess(command) == Command.COMPLETED)
+                                command.setExecutionState(Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT);
+                            return command.getExecutionState();
+                        }
                         command.setExecutionState(Command.FAILED);
+                    }
                 }
                 else if(similarNodes.size() > 1){
                     Log.i(AccessibilityUtil.TAG, "There are more than one candidates for the target.");
@@ -41,13 +58,19 @@ public class RegularCommandExecutor{
                         Log.i(AccessibilityUtil.TAG, " Node: " + node);
                     }
                     command.numberOfAttempts++;
-                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT)
+                    if(command.numberOfAttempts >= Command.MAX_ATTEMPT) {
+                        if(WidgetInfo.maskedAttributes.size() > 0) {
+                            if(RegularCommandExecutor.executeInSwitchAccess(command) == Command.COMPLETED)
+                                command.setExecutionState(Command.COMPLETED_BY_REGULAR_UNABLE_TO_DETECT);
+                            return command.getExecutionState();
+                        }
                         command.setExecutionState(Command.FAILED);
+                    }
                 }
                 else{
                     AccessibilityNodeInfo node = similarNodes.get(0);
                     if(reportA11YIssue)
-                        command.setHasWidgetA11YIssue(getA11yIssues(node).size() > 0);
+                        command.setHasWidgetA11YIssue(getA11yIssuesTalkBack(node).size() > 0);
                     int trackAction = command.trackAction(node);
                     Log.i(AccessibilityUtil.TAG, String.format("The following widget has been visited %d times: %s", trackAction, WidgetInfo.create(node)));
                     WidgetInfo currentNodeInfo = WidgetInfo.create(node);
@@ -130,5 +153,21 @@ public class RegularCommandExecutor{
 
     public static List<AccessibilityHierarchyCheckResult> getA11yIssues(AccessibilityNodeInfo rootNode){
         return AccessibilityUtil.getA11yIssues(rootNode);
+    }
+
+    public static List<AccessibilityHierarchyCheckResult> getA11yIssuesTalkBack(AccessibilityNodeInfo rootNode){
+        Set<AccessibilityHierarchyCheck> checks = new HashSet<>(Arrays.asList(
+                AccessibilityCheckPreset.getHierarchyCheckForClass(TraversalOrderCheck.class),
+                AccessibilityCheckPreset.getHierarchyCheckForClass(SpeakableTextPresentCheck.class),
+                AccessibilityCheckPreset.getHierarchyCheckForClass(EditableContentDescCheck.class),
+                AccessibilityCheckPreset.getHierarchyCheckForClass(DuplicateSpeakableTextCheck.class),
+                AccessibilityCheckPreset.getHierarchyCheckForClass(RedundantDescriptionCheck.class)
+        ));
+        List<AccessibilityHierarchyCheckResult> result = AccessibilityUtil.getA11yIssues(rootNode, true, checks);
+        Log.i(AccessibilityUtil.TAG, " A11Y Issues of " + rootNode);
+        for(AccessibilityHierarchyCheckResult r : result){
+            Log.i(AccessibilityUtil.TAG, "\tIssue: " + r);
+        }
+        return result;
     }
 }

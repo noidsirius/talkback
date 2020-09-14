@@ -47,11 +47,16 @@ public class TalkBackCommandExecutor {
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     public static int executeCommand(Command command){
-        Log.i(AccessibilityUtil.TAG, String.format("TalkBack Command state: %s, action: %s, actionExtra: %s, target: %s.",
+        Log.i(AccessibilityUtil.TAG, String.format("TalkBack Command state: %s, action: %s, actionExtra: %s, target: %s, skip: %s.",
                 command.getExecutionState(),
                 command.getAction(),
                 command.getActionExtra(),
-                command.getTargetWidgetInfo()));
+                command.getTargetWidgetInfo(),
+                command.skip));
+        if(command.shouldSkip()){
+            int result = RegularCommandExecutor.executeInTalkBack(command);
+            return result;
+        }
         Log.i(AccessibilityUtil.TAG, "-- Current Focused Node" + focusedNode);
         if(focusedNode == null){
             waitingForFocusChange++;

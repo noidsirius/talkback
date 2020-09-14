@@ -241,31 +241,32 @@ public class AccessibilityUtil {
     }
 
     public static List<AccessibilityNodeInfo> findNodesWithoutMasks(WidgetInfo target){
-        List<AccessibilityNodeInfo> result = new ArrayList<>();
-        for(AccessibilityNodeInfo node : getAllA11yNodeInfo(false)) {
-            WidgetInfo currentNodeInfo = WidgetInfo.create(node);
-            if (target.isSimilarWithoutContext(currentNodeInfo, new ArrayList<>()))
-                result.add(node);
-        }
-        if(result.size() > 1){
-            List<AccessibilityNodeInfo> filteredResult = new ArrayList<>();
-            for(AccessibilityNodeInfo node : result){
-                WidgetInfo currentNodeInfo = WidgetInfo.create(node);
-                if(target.isSimilarContext(currentNodeInfo))
-                    filteredResult.add(node);
-            }
-            result = filteredResult;
-        }
-        return result;
+        return privateFindNodes(target, new ArrayList<>());
     }
 
     public static List<AccessibilityNodeInfo> findNodes(WidgetInfo target){
+        return privateFindNodes(target, WidgetInfo.maskedAttributes);
+    }
+
+    private static List<AccessibilityNodeInfo> privateFindNodes(WidgetInfo target, List<String> myMaskedAttributes){
         List<AccessibilityNodeInfo> result = new ArrayList<>();
+        List<AccessibilityNodeInfo> nonVisibleResult = new ArrayList<>();
+//        Log.i(TAG, " Looking for Widget: " + target + " Masks: " + WidgetInfo.maskedAttributes);
         for(AccessibilityNodeInfo node : getAllA11yNodeInfo(false)) {
+            if(!node.isVisibleToUser())
+                continue;
             WidgetInfo currentNodeInfo = WidgetInfo.create(node);
-            if (target.isSimilarWithoutContext(currentNodeInfo))
-                result.add(node);
+//            Log.i(TAG, " Is similar?" + currentNodeInfo);
+            if (target.isSimilarWithoutContext(currentNodeInfo, myMaskedAttributes)) {
+//                Log.i(TAG, " \tYes");
+                if(node.isVisibleToUser())
+                    result.add(node);
+                else
+                    nonVisibleResult.add(node);
+            }
         }
+        if(result.size() == 0)
+            result.addAll(nonVisibleResult);
         if(result.size() > 1){
             List<AccessibilityNodeInfo> filteredResult = new ArrayList<>();
             for(AccessibilityNodeInfo node : result){

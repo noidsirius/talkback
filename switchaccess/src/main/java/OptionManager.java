@@ -667,7 +667,7 @@ public class OptionManager implements SwitchAccessPreferenceChangedListener, Men
                     widgetInfo,
                     currentNode));
     SwitchAccessCommandExecutor.currentRootNode = currentTreeRootNode;
-    String x = "ab2dsd";
+    String x = "ab2d44sd";
     SwitchAccessCommandExecutor.setFocusedNode(widgetInfo, currentNode);
 //    if(currentlyActiveNode!= null)
 //      Log.i(SwitchAccessCommandExecutor.TAG, "CURRENT HASH " + currentlyActiveNode.unwrap().hashCode());

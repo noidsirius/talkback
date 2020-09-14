@@ -60,11 +60,15 @@ public class SwitchAccessCommandExecutor {
     }
 
     public static int executeCommand(Command command){
-        Log.i(AccessibilityUtil.TAG, String.format("SwitchAccess Command state: %s, action: %s, actionExtra: %s, target: %s.",
+        Log.i(AccessibilityUtil.TAG, String.format("SwitchAccess Command state: %s, action: %s, actionExtra: %s, target: %s, skip: %s.",
                 command.getExecutionState(),
                 command.getAction(),
                 command.getActionExtra(),
-                command.getTargetWidgetInfo()));
+                command.getTargetWidgetInfo(), command.shouldSkip()));
+        if(command.shouldSkip()){
+            int result = RegularCommandExecutor.executeInSwitchAccess(command);
+            return result;
+        }
         if(focusedNode == null ||
                 (!focusedNode.isMenu
                         && !focusedNode.isLastNode

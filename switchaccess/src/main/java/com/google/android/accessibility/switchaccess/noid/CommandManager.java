@@ -88,18 +88,18 @@ public class CommandManager {
             }, currentCommand.getSleepTime()*1000);
             return true;
         }
-        if(currentCommand.shouldSkip()){
-            int result = RegularCommandExecutor.executeInSwitchAccess(currentCommand);
-            if(result == Command.COMPLETED) {
-                Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex+1) + " is completed!");
-                lastCommandIndex++;
-            }
-            else if(result == Command.FAILED) {
-                Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex + 1) + " is failed!");
-                lastCommandIndex++;
-            }
-        }
-        else {
+//        if(currentCommand.shouldSkip()){
+//            int result = RegularCommandExecutor.executeInTalkBack(currentCommand);
+//            if(result == Command.COMPLETED) {
+//                Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex+1) + " is completed!");
+//                lastCommandIndex++;
+//            }
+//            else if(result == Command.FAILED) {
+//                Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex + 1) + " is failed!");
+//                lastCommandIndex++;
+//            }
+//        }
+//        else {
             int result = executeCommand(currentCommand);
             if (result == Command.COMPLETED
                     || result == Command.COMPLETED_BY_REGULAR
@@ -110,7 +110,7 @@ public class CommandManager {
                 Log.i(AccessibilityUtil.TAG, "Command " + (lastCommandIndex + 1) + " is failed!");
                 lastCommandIndex++;
             }
-        }
+//        }
         return true;
     }
 

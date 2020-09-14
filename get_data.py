@@ -14,6 +14,10 @@ data = {'Geek': ("a3-shopping/a31-Geek Smarter Shopping_v2.3.7_apkpure.com.apk",
 	'Clock' : ('clock.apk', 'hdesign.theclock'),
 	'Cook': ('cookpad.apk', 'com.mufumbo.android.recipe.search'),
 	'Trip': ('tripit.apk', 'com.tripit'),	
+	'Jetblue': ('jetblue.apk', 'com.jetblue.JetBlueAndroid'),
+	'Soundcloud': ('soundcloud.apk', 'com.soundcloud.android'),
+	'Viemo': ('vimeo.apk', 'com.vimeo.android.videoapp'),
+	'Ziprecruiter': ('ziprecruiter.apk', 'com.ziprecruiter.android.release'),
 	}
 
 import sys

@@ -171,8 +171,10 @@ public class WidgetInfo {
                 continue;
             boolean isSimilarAttribute = isSimilarAttribute(other, attrName);
             if(isLocatedBy(attrName) || other.isLocatedBy(attrName)) {
+//                if(!attrName.equals("xpath"))
                 return isSimilarAttribute;
-//                isSimilar &= isSimilarAttribute;
+//                else
+//                    isSimilar &= isSimilarAttribute;
             }
             if(!attrName.equals("xpath"))
                 isSimilar &= isSimilarAttribute;
