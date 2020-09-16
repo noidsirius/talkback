@@ -22,6 +22,7 @@ data = {'Geek': ("a3-shopping/a31-Geek Smarter Shopping_v2.3.7_apkpure.com.apk",
 	'Feedly' :('feedly.apk', 'com.devhd.feedly'),
 	'Astro' :('astro.apk', 'com.metago.astro'),
 	'ESPN' :('espn.apk', 'com.jacobsmedia.KIROAM'),
+	'Checkout' :('checkout.apk', 'com.c51'),
 
 	}
 
